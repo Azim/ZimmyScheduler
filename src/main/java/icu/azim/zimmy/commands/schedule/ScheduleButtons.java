@@ -1,6 +1,7 @@
 package icu.azim.zimmy.commands.schedule;
 
 import java.util.Date;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.javacord.api.entity.channel.ServerTextChannel;
@@ -62,13 +63,14 @@ public class ScheduleButtons implements MessageComponentCreateListener {
 	    		
 	    		break;
 	    	case "save":
-				ComponentInteractionOriginalMessageUpdater updater = messageComponentInteraction.createOriginalMessageUpdater().removeAllComponents().removeAllEmbeds();
+				ComponentInteractionOriginalMessageUpdater updater = messageComponentInteraction.createOriginalMessageUpdater().removeAllComponents().removeAllEmbeds().setContent(" ");
+				
 				if(data.date.before(new Date())){
-					updater.setContent("Message will be sent right away").update();
+					send(updater, "Message will be sent right away");
 					data.execute(false).thenAccept(success->{
-						updater.setContent("Message sent").update();
+						send(updater, "Message sent");
 					}).exceptionally(e->{
-						updater.setContent("Error occured while sending message:\n`"+e.getMessage()+"`").update();
+						send(updater, "Error occured while sending message:\n`"+e.getMessage()+"`");
 						return null;
 					});
 				} else {
@@ -76,23 +78,25 @@ public class ScheduleButtons implements MessageComponentCreateListener {
 					channel.sendMessage(new EmbedBuilder()
 							.setAuthor(event.getMessageComponentInteraction().getUser())
 							.setDescription("Message `#"+eid+"` will be sent <t:"+(data.date.getTime()/1000)+":R>")
-							
 							);
-				    
-					updater.setContent("Message will be sent <t:"+(data.date.getTime()/1000)+":R>\nMessage id is `#"+eid+"`").update();
+				    send(updater,"Message will be sent <t:"+(data.date.getTime()/1000)+":R>\nMessage id is `#"+eid+"`");
 					try {
 						Zimmy.getInstance().registerOnce(data.date, eid+"");
 					} catch (SchedulerException e) {
-						updater.setContent("Error occured while scheduling the message `#"+eid+"`.\n"+e.getMessage()).update();
+						send(updater,"Error occured while scheduling the message `#"+eid+"`.\n"+e.getMessage());
 						e.printStackTrace();
 					}
 				}
 	    		break;
 	    	case "cancel":
-	    		event.getMessageComponentInteraction().createOriginalMessageUpdater().removeAllComponents().removeAllEmbeds().setContent("Cancelled").update();
+	    		event.getMessageComponentInteraction().createOriginalMessageUpdater().removeAllComponents().removeAllEmbeds().setContent(" ").addEmbed(new EmbedBuilder().setDescription("Cancelled")).update();
 	    		messageComponentInteraction.acknowledge();
 	    		break;
 	    }
 	}
 
+	private CompletableFuture<Void> send(ComponentInteractionOriginalMessageUpdater updater, String text) {
+		return updater.addEmbed(new EmbedBuilder().setDescription(text)).update();
+	}
+	
 }

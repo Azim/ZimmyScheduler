@@ -20,6 +20,7 @@ import org.javacord.api.entity.message.MessageBuilder;
 import org.javacord.api.entity.message.component.ActionRow;
 import org.javacord.api.entity.message.component.Button;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
+import org.javacord.api.entity.permission.PermissionType;
 import org.javacord.api.entity.server.Server;
 import org.javacord.api.entity.user.User;
 import org.javacord.api.interaction.SlashCommandOption;
@@ -40,6 +41,7 @@ import icu.azim.zimmy.commands.configure.Configure;
 import icu.azim.zimmy.commands.edit.Edit;
 import icu.azim.zimmy.commands.edit.EditConfirmButton;
 import icu.azim.zimmy.commands.help.Help;
+import icu.azim.zimmy.commands.planned.DeleteButtons;
 import icu.azim.zimmy.commands.planned.Planned;
 import icu.azim.zimmy.commands.planned.PlannedButtons;
 import icu.azim.zimmy.commands.schedule.Schedule;
@@ -53,6 +55,8 @@ import pw.mihou.velen.interfaces.Velen;
 import pw.mihou.velen.interfaces.VelenCommand;
 import pw.mihou.velen.internals.observer.VelenObserver;
 import pw.mihou.velen.internals.observer.modes.ObserverMode;
+import pw.mihou.velen.utils.VelenBotInviteBuilder;
+import pw.mihou.velen.utils.invitebuilder.InviteScope;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
@@ -157,6 +161,11 @@ public class Zimmy {
 		}).join();
 
 		System.out.println("Logged in bot");
+		System.out.println("You can invite bot using this url: "+new VelenBotInviteBuilder(api.getClientId())
+				.addScopes(InviteScope.APPLICATIONS_COMMANDS, InviteScope.BOT)
+				.setPermissions(PermissionType.MANAGE_ROLES, PermissionType.MANAGE_CHANNELS, PermissionType.MANAGE_WEBHOOKS, PermissionType.READ_MESSAGES, PermissionType.SEND_MESSAGES, PermissionType.EMBED_LINKS, PermissionType.ATTACH_FILE, PermissionType.READ_MESSAGE_HISTORY, PermissionType.USE_EXTERNAL_EMOJIS, PermissionType.ADD_REACTIONS, PermissionType.USE_SLASH_COMMANDS)
+				.create()
+				);
 		
 		velen = Velen.builder()
 				.setDefaultCooldownTime(Duration.ZERO)
@@ -425,6 +434,7 @@ public class Zimmy {
 				.addMiddlewares("server check", "configuration check", "permission check")
 				.attach();
 		api.addMessageComponentCreateListener(new PlannedButtons());
+		api.addMessageComponentCreateListener(new DeleteButtons());
 		
 		
 		VelenCommand.ofSlash("edit", "Edit planned message", velen, new Edit())

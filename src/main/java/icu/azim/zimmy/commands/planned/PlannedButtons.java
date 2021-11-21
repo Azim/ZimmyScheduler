@@ -1,7 +1,6 @@
 package icu.azim.zimmy.commands.planned;
 
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 
 import org.javacord.api.entity.channel.ServerTextChannel;
 import org.javacord.api.entity.message.component.ActionRow;
@@ -13,7 +12,6 @@ import org.javacord.api.interaction.MessageComponentInteraction;
 import org.javacord.api.interaction.callback.InteractionCallbackDataFlag;
 import org.javacord.api.listener.interaction.MessageComponentCreateListener;
 import org.javacord.api.util.logging.ExceptionLogger;
-import org.quartz.SchedulerException;
 
 import icu.azim.zimmy.Zimmy;
 import icu.azim.zimmy.util.ServerUtil;
@@ -51,9 +49,7 @@ public class PlannedButtons implements MessageComponentCreateListener {
 						messageComponentInteraction.createImmediateResponder() .setContent("This channel needs a webhook for you to be able to use previews").setFlags(InteractionCallbackDataFlag.EPHEMERAL).respond();
 						return;
 					} else {
-						messageComponentInteraction.createImmediateResponder().setContent("Here's your message").setFlags(InteractionCallbackDataFlag.EPHEMERAL).respond().thenAccept(updater -> {
-									event.getApi().getThreadPool().getScheduler().schedule(() -> updater.delete(), 5, TimeUnit.MINUTES);
-								});
+						messageComponentInteraction.createImmediateResponder().setContent("Here's your message").setFlags(InteractionCallbackDataFlag.EPHEMERAL).respond();
 						new WebhookPayload(webhooks.get(0).getUrl().toString(), data.json).execute(true).exceptionally(ExceptionLogger.get());
 						return;
 					}
@@ -82,14 +78,12 @@ public class PlannedButtons implements MessageComponentCreateListener {
 				}
 				break;
 			case "delete":
-				try { //TODO confirmation
-					Zimmy.getInstance().deleteTrigger(eid);
-					ServerUtil.removeTask(eid, j);
-					event.getMessageComponentInteraction().createOriginalMessageUpdater().removeAllEmbeds().removeAllComponents().setContent("Message `#"+eid+"` deleted").update();
-				} catch (SchedulerException e) {
-					messageComponentInteraction.createImmediateResponder().setContent("Exception while creating shortened url:\n"+e.getMessage()).setFlags(InteractionCallbackDataFlag.EPHEMERAL).respond();
-					return;
-				}
+				event.getMessageComponentInteraction().createOriginalMessageUpdater().removeAllComponents().setContent(" ").removeAllEmbeds()
+				.addEmbed(new EmbedBuilder().setDescription("Are you sure?"))
+				.addComponents(ActionRow.of(
+						Button.danger("delete:"+eid+":yes", "Delete"),
+			            Button.secondary("delete:"+eid+":cancel", "Cancel")))
+				.update();
 				
 				break;
 			}
