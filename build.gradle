@@ -1,0 +1,57 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'eclipse'
+}
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+repositories {
+    jcenter()
+    mavenCentral()
+    maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
+    
+    maven { url 'https://jitpack.io' }
+}
+
+sourceCompatibility = 16 	//TODO
+targetCompatibility = 16	//TODO
+compileJava.options.encoding = 'UTF-8'
+
+dependencies {
+    implementation 'com.google.guava:guava:28.0-jre'
+	implementation 'com.google.code.gson:gson:2.8.6'
+	implementation 'com.fasterxml.jackson.core:jackson-databind:2.9.3'
+	
+	//implementation 'org.javacord:javacord:3.3.2'
+	//implementation 'org.javacord:javacord-core:3.3.2'
+	
+	implementation 'org.javacord:javacord:3.4.0-SNAPSHOT'
+	implementation 'org.javacord:javacord-core:3.4.0-SNAPSHOT'
+	
+	implementation 'pw.mihou:Velen:73ec177089'
+	//implementation 'pw.mihou:Velen:v3.0.0'7be454b0d92c5cf21bb6ab5f1255e4a516b11ce0
+	//implementation 'com.github.Joshix-1:Javacord:Jemand-SNAPSHOT'
+	//implementation 'com.github.Joshix-1:Javacord:e5b6a2e'
+	
+	implementation 'redis.clients:jedis:3.3.0'
+	
+	implementation 'org.quartz-scheduler:quartz:2.3.2'
+	implementation 'mysql:mysql-connector-java:8.0.27'
+	
+	//stats
+	implementation 'com.squareup.okhttp3:okhttp:4.9.2'
+	
+	//implementation 'ch.qos.logback:logback-classic:1.2.7'
+	
+    testImplementation 'junit:junit:4.12'
+    
+}
+application {
+    // Define the main class for the application
+    mainClassName = 'icu.azim.fr.autobot.EntryPoint'
+}
+
+test {
+    systemProperty "file.encoding", "utf-8"
+}
