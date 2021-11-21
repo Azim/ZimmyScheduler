@@ -17,6 +17,7 @@ import org.javacord.core.util.rest.RestRequest;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import icu.azim.zimmy.util.payload.WebhookPayload;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 

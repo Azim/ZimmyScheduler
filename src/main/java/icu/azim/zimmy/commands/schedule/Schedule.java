@@ -29,7 +29,7 @@ import org.javacord.api.util.logging.ExceptionLogger;
 import icu.azim.zimmy.Zimmy;
 import icu.azim.zimmy.util.TempUtil;
 import icu.azim.zimmy.util.Util;
-import icu.azim.zimmy.util.WebhookPayload;
+import icu.azim.zimmy.util.payload.WebhookPayload;
 import pw.mihou.velen.interfaces.VelenArguments;
 import pw.mihou.velen.interfaces.VelenSlashEvent;
 import redis.clients.jedis.Jedis;

@@ -8,7 +8,7 @@ import org.quartz.SchedulerException;
 
 import icu.azim.zimmy.Zimmy;
 import icu.azim.zimmy.util.ServerUtil;
-import icu.azim.zimmy.util.WebhookPayload;
+import icu.azim.zimmy.util.payload.WebhookPayload;
 import redis.clients.jedis.Jedis;
 
 public class EditConfirmButton implements MessageComponentCreateListener {

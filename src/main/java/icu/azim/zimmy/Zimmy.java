@@ -46,11 +46,12 @@ import icu.azim.zimmy.commands.planned.Planned;
 import icu.azim.zimmy.commands.planned.PlannedButtons;
 import icu.azim.zimmy.commands.schedule.Schedule;
 import icu.azim.zimmy.commands.schedule.ScheduleButtons;
+import icu.azim.zimmy.commands.template.Template;
 import icu.azim.zimmy.quartz.SendJob;
 import icu.azim.zimmy.util.ServerUtil;
 import icu.azim.zimmy.util.Statistics;
 import icu.azim.zimmy.util.Util;
-import icu.azim.zimmy.util.WebhookPayload;
+import icu.azim.zimmy.util.payload.WebhookPayload;
 import pw.mihou.velen.interfaces.Velen;
 import pw.mihou.velen.interfaces.VelenCommand;
 import pw.mihou.velen.internals.observer.VelenObserver;
@@ -215,7 +216,7 @@ public class Zimmy {
 			String message = "";
 			for(Server server:api.getServers()) {
 				long size = j.llen("s:"+server.getId()+":planned");
-				String row = String.format("`%s`(`%s) - %d members (%d posts planned)", server.getName(), server.getIdAsString(), server.getMemberCount(), size);
+				String row = String.format("`%s`(`%s`) - %d members (%d posts planned)", server.getName(), server.getIdAsString(), server.getMemberCount(), size);
 				if(message.length()+row.length()>=2000) {
 					mainChannel.sendMessage(message);
 					message = row;
@@ -412,41 +413,40 @@ public class Zimmy {
 		
 		
 		VelenCommand.ofSlash("schedule", "Schedule a message", velen, new Schedule())
-				.addOptions(
-						SlashCommandOption.createWithOptions(
-								SlashCommandOptionType.SUB_COMMAND, "channel", "You are scheduling message to the channel in this server",
-								Arrays.asList(
-										SlashCommandOption.create(SlashCommandOptionType.CHANNEL, "channel_mention", "The channel to send message to", true),
-										SlashCommandOption.create(SlashCommandOptionType.STRING, "discohook_url", "Discohook message url", true),
-										SlashCommandOption.create(SlashCommandOptionType.STRING, "datetime", "When to send message (`dd.MM.yyyy HH:mm` or `HH:mm`)", true))),
-						SlashCommandOption.createWithOptions(
-								SlashCommandOptionType.SUB_COMMAND, "webhook", "Schedule a message to any webhook",
-								Arrays.asList(
-										SlashCommandOption.create(SlashCommandOptionType.STRING, "webhook_url", "The webhook to send message to", true),
-										SlashCommandOption.create(SlashCommandOptionType.STRING, "discohook_url", "Discohook message url", true),
-										SlashCommandOption.create(SlashCommandOptionType.STRING, "datetime", "When to send message (`dd.MM.yyyy HH:mm` or `HH:mm`)", true))))
-				.addMiddlewares("server check", "configuration check", "permission check")
-				.attach();
+			.addOptions(
+					SlashCommandOption.createWithOptions(
+							SlashCommandOptionType.SUB_COMMAND, "channel", "You are scheduling message to the channel in this server",
+							Arrays.asList(
+									SlashCommandOption.create(SlashCommandOptionType.CHANNEL, "channel_mention", "The channel to send message to", true),
+									SlashCommandOption.create(SlashCommandOptionType.STRING, "discohook_url", "Discohook message url", true),
+									SlashCommandOption.create(SlashCommandOptionType.STRING, "datetime", "When to send message (`dd.MM.yyyy HH:mm` or `HH:mm`)", true))),
+					SlashCommandOption.createWithOptions(
+							SlashCommandOptionType.SUB_COMMAND, "webhook", "Schedule a message to any webhook",
+							Arrays.asList(
+									SlashCommandOption.create(SlashCommandOptionType.STRING, "webhook_url", "The webhook to send message to", true),
+									SlashCommandOption.create(SlashCommandOptionType.STRING, "discohook_url", "Discohook message url", true),
+									SlashCommandOption.create(SlashCommandOptionType.STRING, "datetime", "When to send message (`dd.MM.yyyy HH:mm` or `HH:mm`)", true))))
+			.addMiddlewares("server check", "configuration check", "permission check")
+			.attach();
 		api.addMessageComponentCreateListener(new ScheduleButtons());
 		
 		
 		VelenCommand.ofSlash("planned", "Show currently planned messages", velen, new Planned())
-				.addMiddlewares("server check", "configuration check", "permission check")
-				.attach();
+			.addMiddlewares("server check", "configuration check", "permission check")
+			.attach();
 		api.addMessageComponentCreateListener(new PlannedButtons());
 		api.addMessageComponentCreateListener(new DeleteButtons());
 		
-		
 		VelenCommand.ofSlash("edit", "Edit planned message", velen, new Edit())
-				.addOptions(
-						SlashCommandOption.create(SlashCommandOptionType.INTEGER, "id", "id of the message you want to edit", true),
-						SlashCommandOption.createWithChoices(SlashCommandOptionType.STRING, "property", "Which property of planned message do you want to edit?", true, Arrays.asList(
-								SlashCommandOptionChoice.create("destination", "destination"),
-								SlashCommandOptionChoice.create("discohook_url", "discohook_url"),
-								SlashCommandOptionChoice.create("datetime", "datetime"))),
-						SlashCommandOption.create(SlashCommandOptionType.STRING, "new_value", "New value of the property", true))
-				.addMiddlewares("server check", "configuration check", "permission check")
-				.attach();
+			.addOptions(
+					SlashCommandOption.create(SlashCommandOptionType.INTEGER, "id", "id of the message you want to edit", true),
+					SlashCommandOption.createWithChoices(SlashCommandOptionType.STRING, "property", "Which property of planned message do you want to edit?", true, Arrays.asList(
+							SlashCommandOptionChoice.create("destination", "destination"),
+							SlashCommandOptionChoice.create("discohook_url", "discohook_url"),
+							SlashCommandOptionChoice.create("datetime", "datetime"))),
+					SlashCommandOption.create(SlashCommandOptionType.STRING, "new_value", "New value of the property", true))
+			.addMiddlewares("server check", "configuration check", "permission check")
+			.attach();
 		api.addMessageComponentCreateListener(new EditConfirmButton());
 		
 		VelenCommand.ofSlash("configure", "Configure bot for this server", velen, new Configure())
@@ -464,9 +464,32 @@ public class Zimmy {
 			.attach();
 
 		VelenCommand.ofSlash("help", "Show something helpful maybe", velen, new Help())
-				.attach();
+			.attach();
+		
+		VelenCommand.ofSlash("template", "manage templates", velen, new Template())
+			.addOptions(
+					SlashCommandOption.createWithOptions(SlashCommandOptionType.SUB_COMMAND, "create", "Create new template", Arrays.asList(
+							SlashCommandOption.create(SlashCommandOptionType.STRING, "name", "Name of template"),
+							SlashCommandOption.create(SlashCommandOptionType.STRING, "discohook_url", "Discohook message url"),
+							SlashCommandOption.create(SlashCommandOptionType.STRING, "variables", "Variables used in template, separated by comma (,)")
+							)),
+					SlashCommandOption.create(SlashCommandOptionType.SUB_COMMAND, "list", "Show existing templates"),
+					SlashCommandOption.createWithOptions(SlashCommandOptionType.SUB_COMMAND, "edit", "Edit a template", Arrays.asList(
+							SlashCommandOption.create(SlashCommandOptionType.STRING, "name", "Name of template to edit"),
+							SlashCommandOption.create(SlashCommandOptionType.STRING, "new_name", "New name of the template"),
+							SlashCommandOption.create(SlashCommandOptionType.STRING, "new_discohook_url", "New discohook message url"),
+							SlashCommandOption.create(SlashCommandOptionType.STRING, "new_variables", "New variables, separated by comma (,)")
+							)),
+					SlashCommandOption.createWithOptions(SlashCommandOptionType.SUB_COMMAND, "delete", "Delete a template", Arrays.asList(
+							SlashCommandOption.create(SlashCommandOptionType.STRING, "name", "Name of the template to delete")
+							))
+					)
+			.addMiddlewares("server check", "configuration check", "permission check")
+			.attach();
 		
 	}
+	
+	
 	
 	private void setupStats(DiscordApi api, String token) {
 		String botid = api.getYourself().getIdAsString();

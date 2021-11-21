@@ -1,4 +1,4 @@
-package icu.azim.zimmy.util;
+package icu.azim.zimmy.util.payload;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -20,6 +20,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
 import icu.azim.zimmy.Zimmy;
+import icu.azim.zimmy.util.Util;
+import pw.mihou.velen.utils.Pair;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
@@ -61,6 +63,15 @@ public class WebhookPayload {
 		return result;
 	}
 
+	public static WebhookPayload fromTemplate(String url, String server, String name, Jedis j, List<Pair<String, String>> properties) {
+		TemplatePayload template = TemplatePayload.fromJedis(name, server, j);
+		WebhookPayload payload = new WebhookPayload(url, template.data);
+		for(Pair<String, String> property:properties) {
+			payload.json.replace("%"+property.getLeft()+"%", property.getRight()); //.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")); //TODO maybe some proper ways of doing it sometime
+		}
+		return payload;
+	}
+
 	public static List<WebhookPayload> fromRedisDate(Date date, JedisPool jpool) {
 		try(Jedis j = jpool.getResource()){
 			if(!j.exists("e:sendAt:"+date.getTime())) return new ArrayList<WebhookPayload>();
@@ -72,7 +83,7 @@ public class WebhookPayload {
 	public void fromFile(InputStream inputStream) {
 		json = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8)).lines().collect(Collectors.joining("\n"));
 	}
-
+	
 	public boolean isValid() {
 		try {
 			new Gson().fromJson(json, JsonObject.class);

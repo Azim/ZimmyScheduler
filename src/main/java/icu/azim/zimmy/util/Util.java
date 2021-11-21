@@ -36,6 +36,7 @@ public class Util {
 	private static final OkHttpClient httpClient = new OkHttpClient();
 	
 	public static final Pattern shortDiscoHook = Pattern.compile("https?:\\/\\/share\\.discohook\\.app\\/go\\/[0-9a-z]+");
+	public static final String templateUrl = "https://via.placeholder.com/900x500.png?text=Placeholder+for+variable";
 	
 	public static Map<TimeUnit,Long> computeDiff(Date date1, Date date2) {
 
@@ -111,7 +112,7 @@ public class Util {
 		return builder;
 	}
 	
-	private static boolean properHas(JsonObject obj, String piece) {
+	public static boolean properHas(JsonObject obj, String piece) {
 		if(obj.get(piece)==null)return false;
 		if(obj.get(piece).isJsonNull())return false;
 		return true;

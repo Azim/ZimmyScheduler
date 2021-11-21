@@ -7,4 +7,6 @@ Simple discord bot to schedule your announcments or planned posts.
 # Useful info and stuff
 
 - This bot heavily relies on [discohook](https://discohook.org) for the messages
+- Powered by [Javacord](https://github.com/Javacord/Javacord) and [Velen](https://github.com/ShindouMihou/Velen)
+  - and Pepich
 - Not sure what else to write here, so i'll leave it like that for now
