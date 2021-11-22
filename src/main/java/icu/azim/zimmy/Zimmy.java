@@ -6,10 +6,12 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import org.javacord.api.DiscordApi;
 import org.javacord.api.DiscordApiBuilder;
@@ -47,10 +49,12 @@ import icu.azim.zimmy.commands.planned.PlannedButtons;
 import icu.azim.zimmy.commands.schedule.Schedule;
 import icu.azim.zimmy.commands.schedule.ScheduleButtons;
 import icu.azim.zimmy.commands.template.Template;
+import icu.azim.zimmy.commands.template.TemplateUse;
 import icu.azim.zimmy.quartz.SendJob;
 import icu.azim.zimmy.util.ServerUtil;
 import icu.azim.zimmy.util.Statistics;
 import icu.azim.zimmy.util.Util;
+import icu.azim.zimmy.util.payload.TemplatePayload;
 import icu.azim.zimmy.util.payload.WebhookPayload;
 import pw.mihou.velen.interfaces.Velen;
 import pw.mihou.velen.interfaces.VelenCommand;
@@ -83,6 +87,7 @@ public class Zimmy {
 	
 	public DiscordApi api;
 	public Velen velen;
+	public VelenObserver observer;
 	public TextChannel mainChannel;
 	
 	public Scheduler scheduler;
@@ -173,8 +178,9 @@ public class Zimmy {
 				.build();
 		api.addListener(velen);
 		registerCommands();
-		VelenObserver observer = new VelenObserver(api, ObserverMode.MASTER);
+		observer = new VelenObserver(api, ObserverMode.MASTER);
 		observer.observe(velen);
+		loadTemplateCommands();
 		
 		System.out.println("Loaded velen");
 		
@@ -469,19 +475,19 @@ public class Zimmy {
 		VelenCommand.ofSlash("template", "manage templates", velen, new Template())
 			.addOptions(
 					SlashCommandOption.createWithOptions(SlashCommandOptionType.SUB_COMMAND, "create", "Create new template", Arrays.asList(
-							SlashCommandOption.create(SlashCommandOptionType.STRING, "name", "Name of template"),
-							SlashCommandOption.create(SlashCommandOptionType.STRING, "discohook_url", "Discohook message url"),
-							SlashCommandOption.create(SlashCommandOptionType.STRING, "variables", "Variables used in template, separated by comma (,)")
+							SlashCommandOption.create(SlashCommandOptionType.STRING, "name", "Name of template", true),
+							SlashCommandOption.create(SlashCommandOptionType.STRING, "discohook_url", "Discohook message url", true),
+							SlashCommandOption.create(SlashCommandOptionType.STRING, "variables", "Variables used in template, separated by comma (,)", false)
 							)),
 					SlashCommandOption.create(SlashCommandOptionType.SUB_COMMAND, "list", "Show existing templates"),
 					SlashCommandOption.createWithOptions(SlashCommandOptionType.SUB_COMMAND, "edit", "Edit a template", Arrays.asList(
-							SlashCommandOption.create(SlashCommandOptionType.STRING, "name", "Name of template to edit"),
-							SlashCommandOption.create(SlashCommandOptionType.STRING, "new_name", "New name of the template"),
-							SlashCommandOption.create(SlashCommandOptionType.STRING, "new_discohook_url", "New discohook message url"),
-							SlashCommandOption.create(SlashCommandOptionType.STRING, "new_variables", "New variables, separated by comma (,)")
+							SlashCommandOption.create(SlashCommandOptionType.STRING, "name", "Name of template to edit", true),
+							SlashCommandOption.create(SlashCommandOptionType.STRING, "new_name", "New name of the template", true),
+							SlashCommandOption.create(SlashCommandOptionType.STRING, "new_discohook_url", "New discohook message url", true),
+							SlashCommandOption.create(SlashCommandOptionType.STRING, "new_variables", "New variables, separated by comma (,)", false) //TODO dont forget orElse("")
 							)),
 					SlashCommandOption.createWithOptions(SlashCommandOptionType.SUB_COMMAND, "delete", "Delete a template", Arrays.asList(
-							SlashCommandOption.create(SlashCommandOptionType.STRING, "name", "Name of the template to delete")
+							SlashCommandOption.create(SlashCommandOptionType.STRING, "name", "Name of the template to delete", true)
 							))
 					)
 			.addMiddlewares("server check", "configuration check", "permission check")
@@ -567,5 +573,41 @@ public class Zimmy {
 		}, ()->{
 			sendMessageInfo("Old message, but the server is gone now", eid, j);
 		});
+	}
+
+	private void loadTemplateCommands() {
+		try(Jedis j = jedisPool.getResource()){
+			for(Server s:api.getServers()) {
+				s.getSlashCommands().thenAccept(cmds->cmds.forEach(cmd->cmd.deleteForServer(s))).join();
+				for(String key:j.keys("t:"+s.getIdAsString()+":*:data")) {
+					String name = key.split(":")[2];
+					TemplatePayload payload = TemplatePayload.fromJedis(name, s.getIdAsString(), j);
+					if(payload!=null) {
+						createTemplateCommand(s, payload);
+					}else {
+						System.out.println("No template found for ["+key+"]");
+					}
+				}
+			}
+		}
+		syncServerCommands();
+	}
+	
+	public void createTemplateCommand(Server server, TemplatePayload template) {
+		List<SlashCommandOption> properties = template.properties.stream().map(property->SlashCommandOption.create(SlashCommandOptionType.STRING, property, "Property \""+property+"\"", true)).toList();
+		
+		VelenCommand.ofSlash("template", "Manage templates", velen, new TemplateUse())
+			.addOptions(SlashCommandOption.createWithOptions(
+					SlashCommandOptionType.SUB_COMMAND_GROUP, "use", "Use saved template", Arrays.asList(SlashCommandOption.createWithOptions(
+							SlashCommandOptionType.SUB_COMMAND, template.name, "Using template \""+template.name+"\"", Stream.concat( Arrays.asList(
+									SlashCommandOption.create(SlashCommandOptionType.STRING, "destination", "Where to send message to (webhook url or channel mention)", true),
+									SlashCommandOption.create(SlashCommandOptionType.STRING, "datetime", "When to send message (\"dd.MM.yyyy HH:mm\" or \"HH:mm\")", true)
+									).stream(), properties.stream()).toList()))))
+			.addMiddlewares("server check", "configuration check", "permission check")
+			.setServerOnly(true, server.getId())
+			.attach();
+	}
+	public void syncServerCommands() {
+		observer.observeServer(velen, api);
 	}
 }
