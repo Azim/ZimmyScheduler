@@ -28,6 +28,7 @@ import org.javacord.api.entity.user.User;
 import org.javacord.api.interaction.SlashCommandOption;
 import org.javacord.api.interaction.SlashCommandOptionChoice;
 import org.javacord.api.interaction.SlashCommandOptionType;
+import org.javacord.api.util.logging.ExceptionLogger;
 import org.quartz.JobBuilder;
 import org.quartz.JobDetail;
 import org.quartz.JobKey;
@@ -49,7 +50,6 @@ import icu.azim.zimmy.commands.planned.PlannedButtons;
 import icu.azim.zimmy.commands.schedule.Schedule;
 import icu.azim.zimmy.commands.schedule.ScheduleButtons;
 import icu.azim.zimmy.commands.template.Template;
-import icu.azim.zimmy.commands.template.TemplateUse;
 import icu.azim.zimmy.quartz.SendJob;
 import icu.azim.zimmy.util.ServerUtil;
 import icu.azim.zimmy.util.Statistics;
@@ -554,7 +554,6 @@ public class Zimmy {
 								sendMessageInfo("Old message without server info stored on it, and it's owner is gone", id, j);
 							}
 						}
-						
 					}
 				}
 			}
@@ -578,35 +577,36 @@ public class Zimmy {
 	private void loadTemplateCommands() {
 		try(Jedis j = jedisPool.getResource()){
 			for(Server s:api.getServers()) {
-				s.getSlashCommands().thenAccept(cmds->cmds.forEach(cmd->cmd.deleteForServer(s))).join();
-				for(String key:j.keys("t:"+s.getIdAsString()+":*:data")) {
-					String name = key.split(":")[2];
-					TemplatePayload payload = TemplatePayload.fromJedis(name, s.getIdAsString(), j);
-					if(payload!=null) {
-						createTemplateCommand(s, payload);
-					}else {
-						System.out.println("No template found for ["+key+"]");
-					}
-				}
+				updateTemplateCommand(s, j);
 			}
 		}
 		syncServerCommands();
 	}
 	
-	public void createTemplateCommand(Server server, TemplatePayload template) {
-		List<SlashCommandOption> properties = template.properties.stream().map(property->SlashCommandOption.create(SlashCommandOptionType.STRING, property, "Property \""+property+"\"", true)).toList();
-		
-		VelenCommand.ofSlash("template", "Manage templates", velen, new TemplateUse())
-			.addOptions(SlashCommandOption.createWithOptions(
-					SlashCommandOptionType.SUB_COMMAND_GROUP, "use", "Use saved template", Arrays.asList(SlashCommandOption.createWithOptions(
-							SlashCommandOptionType.SUB_COMMAND, template.name, "Using template \""+template.name+"\"", Stream.concat( Arrays.asList(
-									SlashCommandOption.create(SlashCommandOptionType.STRING, "destination", "Where to send message to (webhook url or channel mention)", true),
-									SlashCommandOption.create(SlashCommandOptionType.STRING, "datetime", "When to send message (\"dd.MM.yyyy HH:mm\" or \"HH:mm\")", true)
-									).stream(), properties.stream()).toList()))))
+	public void updateTemplateCommand(Server server, Jedis j) {
+		api.getServerSlashCommands(server).thenAccept(cmds->{
+			cmds.forEach(cmd->cmd.deleteForServer(server));			//TODO filter commands if needed
+		}).exceptionally(ExceptionLogger.get()).join();
+		//TODO delete previous velen command if exists
+		List<SlashCommandOption> subcommands = j.keys("t:"+server.getIdAsString()+":*:data").stream().map(key->TemplatePayload.fromJedis(key.split(":")[2], server.getIdAsString(),j)).filter(t->t!=null).map(template->createTemplateSubcommand(template)).toList();
+		VelenCommand.ofSlash("template", "Manage templates", velen, (e,i,va,u,o,r)->{})
+			.addOptions(SlashCommandOption.createWithOptions(SlashCommandOptionType.SUB_COMMAND_GROUP, "use", "Use saved template", subcommands))
 			.addMiddlewares("server check", "configuration check", "permission check")
 			.setServerOnly(true, server.getId())
 			.attach();
 	}
+	
+	private SlashCommandOption createTemplateSubcommand(TemplatePayload template) {
+		List<SlashCommandOption> properties = template.properties.stream()
+				.map(property->SlashCommandOption.create(SlashCommandOptionType.STRING, property, "Property \""+property+"\"", true)).toList();
+		
+		return SlashCommandOption.createWithOptions(
+						SlashCommandOptionType.SUB_COMMAND, template.name, "Using template \""+template.name+"\"", Stream.concat( Arrays.asList(
+								SlashCommandOption.create(SlashCommandOptionType.STRING, "destination", "Where to send message to (webhook url or channel mention)", true),
+								SlashCommandOption.create(SlashCommandOptionType.STRING, "datetime", "When to send message (\"dd.MM.yyyy HH:mm\" or \"HH:mm\")", true)
+								).stream(), properties.stream()).toList());
+	}
+	
 	public void syncServerCommands() {
 		observer.observeServer(velen, api);
 	}

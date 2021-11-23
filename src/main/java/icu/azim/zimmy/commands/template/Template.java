@@ -112,7 +112,7 @@ public class Template implements VelenSlashEvent {
 			}
 			
 			template.saveToJedis(server.getIdAsString(), j);
-			Zimmy.getInstance().createTemplateCommand(server, template);
+			Zimmy.getInstance().updateTemplateCommand(server, j);
 			Zimmy.getInstance().syncServerCommands();
 			updater.setContent("Created template `"+name+"`.").update();
 		}
@@ -130,8 +130,9 @@ public class Template implements VelenSlashEvent {
 				updater.setContent("Such template doesnt exist.").update();
 				return;
 			}
-			
-			
+			j.del("t:"+server.getIdAsString()+":"+name+":data", "t:"+server.getIdAsString()+":"+name+":properties");
+			Zimmy.getInstance().updateTemplateCommand(server, j);
+			Zimmy.getInstance().syncServerCommands();
 			
 		}
 	}
