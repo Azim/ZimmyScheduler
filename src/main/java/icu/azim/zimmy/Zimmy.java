@@ -400,12 +400,13 @@ public class Zimmy {
 							SlashCommandOption.create(SlashCommandOptionType.STRING, "variables", "Variables used in template, separated by comma (,)", false)
 							)),
 					SlashCommandOption.create(SlashCommandOptionType.SUB_COMMAND, "list", "Show existing templates"),
+					/*
 					SlashCommandOption.createWithOptions(SlashCommandOptionType.SUB_COMMAND, "edit", "Edit a template", Arrays.asList(
 							SlashCommandOption.create(SlashCommandOptionType.STRING, "name", "Name of template to edit", true),
 							SlashCommandOption.create(SlashCommandOptionType.STRING, "new_name", "New name of the template", true),
 							SlashCommandOption.create(SlashCommandOptionType.STRING, "new_discohook_url", "New discohook message url", true),
 							SlashCommandOption.create(SlashCommandOptionType.STRING, "new_variables", "New variables, separated by comma (,)", false) //TODO dont forget orElse("")
-							)),
+							)),*/
 					SlashCommandOption.createWithOptions(SlashCommandOptionType.SUB_COMMAND, "delete", "Delete a template", Arrays.asList(
 							SlashCommandOption.create(SlashCommandOptionType.STRING, "name", "Name of the template to delete", true)
 							))
