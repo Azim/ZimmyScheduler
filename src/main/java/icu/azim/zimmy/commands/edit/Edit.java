@@ -138,7 +138,7 @@ public class Edit implements VelenSlashEvent {
 				}
 				break;
 			case "datetime":
-				SimpleDateFormat formatter = new SimpleDateFormat(Zimmy.dateTimeFormat);
+				SimpleDateFormat formatter = new SimpleDateFormat(Util.dateTimeFormat);
 				String timezone;
 				try(Jedis j = jpool.getResource()){
 					timezone = j.get("s:"+server.getId()+":timezone");
@@ -148,10 +148,10 @@ public class Edit implements VelenSlashEvent {
 				}
 				formatter.setTimeZone(TimeZone.getTimeZone(timezone));
 
-				if(nvalue.matches(Zimmy.timeRegex)) {
+				if(nvalue.matches(Util.timeRegex)) {
 					Date now = new Date();
 
-					SimpleDateFormat f = new SimpleDateFormat(Zimmy.dateFormat);
+					SimpleDateFormat f = new SimpleDateFormat(Util.dateFormat);
 					f.setTimeZone(TimeZone.getTimeZone(timezone));
 
 					String snow = f.format(now);
@@ -161,7 +161,7 @@ public class Edit implements VelenSlashEvent {
 				try {
 					date = formatter.parse(nvalue);
 				} catch (ParseException e) {
-					updater.setContent("Invalid date format, expected "+Zimmy.dateTimeFormat).update();
+					updater.setContent("Invalid date format, expected "+Util.dateTimeFormat).update();
 					return;
 				}
 				if(date.before(new Date())) {

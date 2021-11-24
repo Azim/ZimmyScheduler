@@ -38,6 +38,9 @@ public class Util {
 	public static final Pattern shortDiscoHook = Pattern.compile("https?:\\/\\/share\\.discohook\\.app\\/go\\/[0-9a-z]+");
 	public static final Pattern templateNameFormat = Pattern.compile("^[\\w-]{1,32}$"); 
 	public static final String templateUrl = "https://via.placeholder.com/900x500.png?text=Placeholder+for+variable";
+	public static final String dateTimeFormat = "dd.MM.yyyy HH:mm";
+	public static final String dateFormat = "dd.MM.yyyy";
+	public static final String timeRegex = "^([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$";
 	
 	public static Map<TimeUnit,Long> computeDiff(Date date1, Date date2) {
 

@@ -29,8 +29,8 @@ dependencies {
 	implementation 'org.javacord:javacord:3.4.0-SNAPSHOT'
 	implementation 'org.javacord:javacord-core:3.4.0-SNAPSHOT'
 	
-	implementation 'pw.mihou:Velen:e4b2e168e3'
-	//implementation 'pw.mihou:Velen:v3.0.0'7be454b0d92c5cf21bb6ab5f1255e4a516b11ce0
+	//implementation 'pw.mihou:Velen:e4b2e168e3'
+	implementation 'pw.mihou:Velen:v3.1.0'
 	//implementation 'com.github.Joshix-1:Javacord:Jemand-SNAPSHOT'
 	//implementation 'com.github.Joshix-1:Javacord:e5b6a2e'
 	

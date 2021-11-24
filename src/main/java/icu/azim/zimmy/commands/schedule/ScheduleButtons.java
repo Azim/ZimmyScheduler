@@ -2,7 +2,6 @@ package icu.azim.zimmy.commands.schedule;
 
 import java.util.Date;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
 import org.javacord.api.entity.channel.ServerTextChannel;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
@@ -53,9 +52,7 @@ public class ScheduleButtons implements MessageComponentCreateListener {
 						messageComponentInteraction.createImmediateResponder().setContent("This channel needs a webhook for you to be able to use previews").setFlags(InteractionCallbackDataFlag.EPHEMERAL).respond();
 						return;
 					}else {
-						messageComponentInteraction.createImmediateResponder().setContent("Here's your message").setFlags(InteractionCallbackDataFlag.EPHEMERAL).respond().thenAccept(updater->{
-							event.getApi().getThreadPool().getScheduler().schedule(()->updater.delete(), 5, TimeUnit.MINUTES);
-						});
+						messageComponentInteraction.createImmediateResponder().setContent("Here's your message").setFlags(InteractionCallbackDataFlag.EPHEMERAL).respond();
 						new WebhookPayload(webhooks.get(0).getUrl().toString(), data.json).execute(true).exceptionally(ExceptionLogger.get());
 						return;
 					}

@@ -9,7 +9,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
@@ -18,10 +17,6 @@ import org.javacord.api.DiscordApiBuilder;
 import org.javacord.api.entity.activity.ActivityType;
 import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.entity.intent.Intent;
-import org.javacord.api.entity.message.MessageBuilder;
-import org.javacord.api.entity.message.component.ActionRow;
-import org.javacord.api.entity.message.component.Button;
-import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.permission.PermissionType;
 import org.javacord.api.entity.server.Server;
 import org.javacord.api.entity.user.User;
@@ -50,12 +45,12 @@ import icu.azim.zimmy.commands.planned.PlannedButtons;
 import icu.azim.zimmy.commands.schedule.Schedule;
 import icu.azim.zimmy.commands.schedule.ScheduleButtons;
 import icu.azim.zimmy.commands.template.Template;
+import icu.azim.zimmy.commands.template.TemplateUse;
 import icu.azim.zimmy.quartz.SendJob;
 import icu.azim.zimmy.util.ServerUtil;
 import icu.azim.zimmy.util.Statistics;
 import icu.azim.zimmy.util.Util;
 import icu.azim.zimmy.util.payload.TemplatePayload;
-import icu.azim.zimmy.util.payload.WebhookPayload;
 import pw.mihou.velen.interfaces.Velen;
 import pw.mihou.velen.interfaces.VelenCommand;
 import pw.mihou.velen.internals.observer.VelenObserver;
@@ -69,17 +64,13 @@ import redis.clients.jedis.exceptions.JedisConnectionException;
 
 
 public class Zimmy {
-	public static final String dateTimeFormat = "dd.MM.yyyy HH:mm";
-	public static final String dateFormat = "dd.MM.yyyy";
-	public static final String timeRegex = "^([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$";
-	/*
+	/* //debug go brrrrrr
 	static
 	{
 	     FallbackLoggerConfiguration.setDebug(true);
 	     FallbackLoggerConfiguration.setTrace(true);
 	}
 	*/
-	
 	private static Zimmy instance;
 	public static Zimmy getInstance() {
 		return instance;
@@ -88,6 +79,7 @@ public class Zimmy {
 	public DiscordApi api;
 	public Velen velen;
 	public VelenObserver observer;
+	private TemplateUse templateHandler;
 	public TextChannel mainChannel;
 	
 	public Scheduler scheduler;
@@ -126,7 +118,7 @@ public class Zimmy {
 		
 		isDebug = System.getenv().containsKey("testing");
 		System.out.println(isDebug?"isDebug":"isntDebug");
-		if(isDebug) { //TODO load config from json
+		if(isDebug) { 
 			cfg = BotConfig.fromEnv();
 		}else {
 			try {
@@ -177,10 +169,12 @@ public class Zimmy {
 				.setDefaultCooldownTime(Duration.ZERO)
 				.build();
 		api.addListener(velen);
+		templateHandler = new TemplateUse();
 		registerCommands();
 		observer = new VelenObserver(api, ObserverMode.MASTER);
 		observer.observe(velen);
 		loadTemplateCommands();
+		velen.index(api).join();
 		
 		System.out.println("Loaded velen");
 		
@@ -238,24 +232,6 @@ public class Zimmy {
 		setupWeather(api, cfg.weatherToken);
 		//checkStuff();
 	}
-	
-	
-	@SuppressWarnings("unused")
-	private void sendNewInvite(Server server, Jedis j) {
-		String channelid = j.get("s:"+server.getId()+":channel");
-		if(channelid==null||channelid.isEmpty()) {
-			mainChannel.sendMessage("Should leave unconfigured server "+server.getName()+"(`"+server.getIdAsString()+"`) with "+server.getMemberCount()+" members");
-			//server.leave();
-			return;
-		}
-		api.getTextChannelById(channelid).ifPresentOrElse(channel->{
-			channel.sendMessage(new EmbedBuilder().setDescription("We are updating to slash commands! But since discord is, well, discord - you will probably need to re-authorize the bot to see the /commands.\n\n"+
-					"[Use that invite link to reauthorize the bot](https://discord.com/oauth2/authorize?client_id=721752791512776806&permissions=805424208&scope=bot%20applications.commands&prompt=consent)"));
-		}, ()->{
-			mainChannel.sendMessage("Server "+server.getName()+" (`"+server.getIdAsString()+"`) with "+server.getMemberCount()+" members deleted their channel! what to do what to do!");
-			return;
-		});
-	}
 
 	private void startQuartz(String quartzUrl, String quartzUser, String quartzPassword) {
 		Properties props = new Properties();
@@ -287,62 +263,6 @@ public class Zimmy {
 		}
 	}
 	
-	@SuppressWarnings("unused")
-	private void registerOldTriggers() throws SchedulerException {
-		try(Jedis j = getPool().getResource()){
-			Set<String> tosend = j.keys("e:sendAt:*");
-			for(String key:tosend) {
-				Date now = new Date();
-				Long ldate = Long.valueOf(key.split(":")[2]);
-				Date date = new Date(ldate);
-				if(ldate<now.getTime()) {
-					for(String id:j.lrange(key, 0, -1)){
-						sendOutdatedMessage(id, j);
-						mainChannel.sendMessage("Outdated message #"+id+"\nTime: <t:"+(date.getTime()/1000)+":F>");
-					}
-				}else {
-					for(String id:j.lrange(key, 0, -1)){
-						registerOnce(date, id);
-						mainChannel.sendMessage("Rescheduled #"+id+"\nTime: <t:"+(date.getTime()/1000)+":F>");
-					}
-				}
-			}
-		}
-	}
-	
-	
-	//TODO add way to purge servers manually when needed i guess
-	@SuppressWarnings("unused")
-	private void purge() {
-		
-	}
-	
-	private void sendOutdatedMessage(String id, Jedis j) {
-		String eid = "e:"+id;
-		Long date = Long.valueOf(j.get(eid+":date"))/1000;
-		Long server = Long.valueOf(j.get(eid+":server"));
-		String channel = j.get("s:"+server+":channel");
-		
-		api.getServerTextChannelById(channel).ifPresentOrElse(ch->{
-			String mention = j.get(eid+":mention");
-			if(mention==null) {
-				mention = "`External server`";
-			}
-			ch.sendMessage(
-					"You've got an expired message! It should've been sent some time ago, but for some reason wasnt. Did it happen during maintenance? We are very sorry. Please edit or delete it.",
-					new EmbedBuilder().setDescription(
-							"id: `"+id+"`\n"+
-							"Sending to "+mention+"\n"+
-							"Scheduled time: <t:"+date+":f> (<t:"+date+":R>)"
-					),
-					ActionRow.of(
-							Button.secondary("planned:"+id+":preview", "Preview"),
-				            Button.secondary("planned:"+id+":discohook", "Generate Discohook url"),
-				            Button.danger("planned:"+id+":delete", "Delete")));
-		}, ()->{
-			mainChannel.sendMessage("Message #"+id+"cant be sent cuz no channel is present already");
-		});
-	}
 	
 	public void registerOnce(Date date, String id) throws SchedulerException {
 		if(scheduler.checkExists(new TriggerKey("triggerOnce_"+id))) {
@@ -530,49 +450,6 @@ public class Zimmy {
 	    config.setMinIdle(5);
 	    return new JedisPool(config, host, port, 5000, password);
 	}
-	
-	
-	@SuppressWarnings("unused")
-	private void checkStuff() {
-		int counter = 0;
-		try(Jedis j = jedisPool.getResource()){
-			for(String key:j.keys("e:sendAt:*")) {
-				for(String id:j.lrange(key, 0, -1)) {
-					counter++;
-					if(j.exists("e:"+id+":server")) {
-						String serverid = j.get("e:"+id+":server");
-						checkServer(serverid, id, j);
-					}else {
-						for(String serverKey:j.keys("s:*:planned")) {
-							if(j.lrange(serverKey, 0, -1).stream().anyMatch(k->k.equalsIgnoreCase(id))) {
-								
-								System.out.println("e:"+id+":server - "+serverKey.split(":")[1]);
-								//j.set("e:"+id+":server", serverKey.split(":")[1]);
-								sendMessageInfo("Old message without server info stored on it, but we still found the server", id, j);
-								checkServer(serverKey.split(":")[1], id, j);
-							}else {
-								sendMessageInfo("Old message without server info stored on it, and it's owner is gone", id, j);
-							}
-						}
-					}
-				}
-			}
-		}
-		mainChannel.sendMessage(counter+" messages planned");
-	}
-	
-	private void sendMessageInfo(String content, String id, Jedis j) {
-		WebhookPayload data = WebhookPayload.fromRedis(id, j);
-		new MessageBuilder().setContent(content).setEmbed(data.getDisplayInfo()).send(mainChannel);
-	}
-	
-	private void checkServer(String serverid, String eid, Jedis j) {
-		api.getServerById(serverid).ifPresentOrElse(server->{
-			sendMessageInfo("Everything is fine with this one\nServer: `"+server.getName()+"`(`"+server.getIdAsString()+"`)", eid, j);
-		}, ()->{
-			sendMessageInfo("Old message, but the server is gone now", eid, j);
-		});
-	}
 
 	private void loadTemplateCommands() {
 		try(Jedis j = jedisPool.getResource()){
@@ -585,11 +462,13 @@ public class Zimmy {
 	
 	public void updateTemplateCommand(Server server, Jedis j) {
 		api.getServerSlashCommands(server).thenAccept(cmds->{
-			cmds.forEach(cmd->cmd.deleteForServer(server));			//TODO filter commands if needed
+			cmds.forEach(cmd->cmd.deleteForServer(server));
 		}).exceptionally(ExceptionLogger.get()).join();
-		//TODO delete previous velen command if exists
+		velen.getCommand("template", server.getId()).ifPresent(cmd->{
+			velen.removeCommand(cmd);
+		});
 		List<SlashCommandOption> subcommands = j.keys("t:"+server.getIdAsString()+":*:data").stream().map(key->TemplatePayload.fromJedis(key.split(":")[2], server.getIdAsString(),j)).filter(t->t!=null).map(template->createTemplateSubcommand(template)).toList();
-		VelenCommand.ofSlash("template", "Manage templates", velen, (e,i,va,u,o,r)->{})
+		VelenCommand.ofSlash("template", "Manage templates", velen, templateHandler) 
 			.addOptions(SlashCommandOption.createWithOptions(SlashCommandOptionType.SUB_COMMAND_GROUP, "use", "Use saved template", subcommands))
 			.addMiddlewares("server check", "configuration check", "permission check")
 			.setServerOnly(true, server.getId())
@@ -605,6 +484,9 @@ public class Zimmy {
 								SlashCommandOption.create(SlashCommandOptionType.STRING, "destination", "Where to send message to (webhook url or channel mention)", true),
 								SlashCommandOption.create(SlashCommandOptionType.STRING, "datetime", "When to send message (\"dd.MM.yyyy HH:mm\" or \"HH:mm\")", true)
 								).stream(), properties.stream()).toList());
+	}
+	public void syncServerCommands(Server server) {
+		observer.observeServer(velen, server);
 	}
 	
 	public void syncServerCommands() {

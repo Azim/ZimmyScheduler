@@ -3,15 +3,17 @@ package icu.azim.zimmy.commands.template;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.regex.Matcher;
 import java.util.stream.Stream;
 
+import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.server.Server;
 import org.javacord.api.entity.user.User;
 import org.javacord.api.event.interaction.SlashCommandCreateEvent;
 import org.javacord.api.interaction.SlashCommandInteraction;
 import org.javacord.api.interaction.SlashCommandInteractionOption;
+import org.javacord.api.interaction.callback.InteractionCallbackDataFlag;
+import org.javacord.api.interaction.callback.InteractionFollowupMessageBuilder;
 import org.javacord.api.interaction.callback.InteractionImmediateResponseBuilder;
 import org.javacord.api.interaction.callback.InteractionOriginalResponseUpdater;
 
@@ -43,10 +45,10 @@ public class Template implements VelenSlashEvent {
 				onCreate(jpool, event, server, updater, options.get(0).getOptions());
 				break;
 			case "list":
-				
+				onList(jpool, event, server, updater);
 				break;
 			case "edit":
-				
+				onEdit(jpool, event, server, updater, options.get(0).getOptions());
 				break;
 			case "delete":
 				onDelete(jpool, event, server, updater, options.get(0).getOptions());
@@ -55,17 +57,18 @@ public class Template implements VelenSlashEvent {
 		});
 	}
 
-	
+
 	private void onCreate(JedisPool jpool, 
 			SlashCommandInteraction event, 
 			Server server,
 			InteractionOriginalResponseUpdater updater, 
-			List<SlashCommandInteractionOption> options) throws NoSuchElementException {
+			List<SlashCommandInteractionOption> options){
 		
 		String name = options.get(0).getStringValue().orElseThrow();
 		String discourl = options.get(1).getStringValue().orElseThrow();
-		String tproperties = options.get(2).getStringValue().orElse("");
-		List<String> properties = Stream.of(tproperties.split(",")).map(p->p.trim()).toList();
+		String tproperties = options.size()>2?options.get(2).getStringValue().orElse(""):"";
+		List<String> properties = tproperties.length()>0?Stream.of(tproperties.split(",")).map(p->p.trim()).distinct().toList():new ArrayList<String>(1);
+		String tkey = "t:"+server.getIdAsString()+":"+name;
 		
 		Matcher matcher = Util.templateNameFormat.matcher(name);
 		if(!matcher.matches()) {
@@ -88,7 +91,7 @@ public class Template implements VelenSlashEvent {
 		}
 
 		try(Jedis j = jpool.getResource()){
-			if(j.exists("t:"+server.getIdAsString()+":"+name+":data")) {
+			if(j.exists(tkey+":data")) {
 				updater.setContent("Such template already exists.").update();
 				return;
 			}
@@ -113,7 +116,7 @@ public class Template implements VelenSlashEvent {
 			
 			template.saveToJedis(server.getIdAsString(), j);
 			Zimmy.getInstance().updateTemplateCommand(server, j);
-			Zimmy.getInstance().syncServerCommands();
+			Zimmy.getInstance().syncServerCommands(server);
 			updater.setContent("Created template `"+name+"`.").update();
 		}
 	}
@@ -122,18 +125,65 @@ public class Template implements VelenSlashEvent {
 			SlashCommandInteraction event, 
 			Server server,
 			InteractionOriginalResponseUpdater updater, 
-			List<SlashCommandInteractionOption> options) throws NoSuchElementException {
+			List<SlashCommandInteractionOption> options){
 		
 		String name = options.get(0).getStringValue().orElseThrow();
+		String tkey = "t:"+server.getIdAsString()+":"+name;
+		
 		try(Jedis j = jpool.getResource()){
-			if(!j.exists("t:"+server.getIdAsString()+":"+name+":data")) {
+			if(!j.exists(tkey+":data")) {
 				updater.setContent("Such template doesnt exist.").update();
 				return;
 			}
-			j.del("t:"+server.getIdAsString()+":"+name+":data", "t:"+server.getIdAsString()+":"+name+":properties");
+			j.del(tkey+":data", tkey+":properties");
 			Zimmy.getInstance().updateTemplateCommand(server, j);
-			Zimmy.getInstance().syncServerCommands();
-			
+			Zimmy.getInstance().syncServerCommands(server);
+			updater.setContent("Deleted template `"+name+"`.").update();
+		}
+	}
+	
+	private void onEdit(JedisPool jpool, 
+			SlashCommandInteraction event, 
+			Server server,
+			InteractionOriginalResponseUpdater updater, 
+			List<SlashCommandInteractionOption> options) {
+		
+		//TODO implemend editing of templates
+		//String name = options.get(0).getStringValue().orElseThrow();
+		//String tkey = "t:"+server.getIdAsString()+":"+name;
+		updater.setContent("not implemented yet, and how is it different from deleting old one and creating a new one with this layout anyway?").update();
+	}
+
+	private void onList(JedisPool jpool, 
+			SlashCommandInteraction event, 
+			Server server,
+			InteractionOriginalResponseUpdater updater) {
+		InteractionFollowupMessageBuilder followup = event.createFollowupMessageBuilder();
+		try(Jedis j = jpool.getResource()){
+			if(j.keys("t:"+server.getId()+":*:data").isEmpty()) {
+				updater.setContent("No templates saved.").update();
+				return;
+			}
+			for(String data:j.keys("t:"+server.getId()+":*:data")) {
+				String name = data.split(":")[2];
+				TemplatePayload template = TemplatePayload.fromJedis(name, server.getIdAsString(), j);
+				
+				String description = "";
+				try {
+					description = "[Discohook url]("+Util.shortenHook(template.data)+")\n";
+				} catch (IOException e) {
+					description = "Discohook url unavailable(`"+e.getMessage()+"`)\n";
+				}
+				if(template.properties.isEmpty()) {
+					description+="No variables";
+				}else {
+					description+=("Variables:\n'"+String.join("`\n`", template.properties)+"`");
+				}
+				followup.setFlags(InteractionCallbackDataFlag.EPHEMERAL).removeAllEmbeds().addEmbed(new EmbedBuilder()
+						.setTitle(name)
+						.setDescription(description))
+				.send();
+			}
 		}
 	}
 }

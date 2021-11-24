@@ -137,7 +137,7 @@ public class Schedule implements VelenSlashEvent {
 				return;
 			}
 			
-			SimpleDateFormat formatter = new SimpleDateFormat(Zimmy.dateTimeFormat);
+			SimpleDateFormat formatter = new SimpleDateFormat(Util.dateTimeFormat);
 			String timezone;
 			try(Jedis j = jpool.getResource()){
 				timezone = j.get("s:"+server.getId()+":timezone");
@@ -147,11 +147,10 @@ public class Schedule implements VelenSlashEvent {
 			}
 			formatter.setTimeZone(TimeZone.getTimeZone(timezone));
 			
-			
-			if(datetime.matches(Zimmy.timeRegex)) {
+			if(datetime.matches(Util.timeRegex)) {
 				Date now = new Date();
 
-				SimpleDateFormat f = new SimpleDateFormat(Zimmy.dateFormat);
+				SimpleDateFormat f = new SimpleDateFormat(Util.dateFormat);
 				f.setTimeZone(TimeZone.getTimeZone(timezone));
 
 				String snow = f.format(now);
@@ -162,7 +161,7 @@ public class Schedule implements VelenSlashEvent {
 			try {
 				tdate = formatter.parse(datetime);
 			} catch (ParseException e) {
-				updater.setContent("Invalid date.\nExpected "+Zimmy.dateTimeFormat).update();
+				updater.setContent("Invalid date.\nExpected "+Util.dateTimeFormat).update();
 				return;
 			}
 			
