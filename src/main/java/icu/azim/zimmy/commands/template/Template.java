@@ -16,6 +16,7 @@ import org.javacord.api.interaction.callback.InteractionCallbackDataFlag;
 import org.javacord.api.interaction.callback.InteractionFollowupMessageBuilder;
 import org.javacord.api.interaction.callback.InteractionImmediateResponseBuilder;
 import org.javacord.api.interaction.callback.InteractionOriginalResponseUpdater;
+import org.javacord.api.util.logging.ExceptionLogger;
 
 import icu.azim.zimmy.Zimmy;
 import icu.azim.zimmy.util.Util;
@@ -54,7 +55,7 @@ public class Template implements VelenSlashEvent {
 				onDelete(jpool, event, server, updater, options.get(0).getOptions());
 				break;
 			}
-		});
+		}).exceptionally(ExceptionLogger.get());
 	}
 
 

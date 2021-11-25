@@ -56,7 +56,7 @@ public class ScheduleButtons implements MessageComponentCreateListener {
 						new WebhookPayload(webhooks.get(0).getUrl().toString(), data.json).execute(true).exceptionally(ExceptionLogger.get());
 						return;
 					}
-				});
+				}).exceptionally(ExceptionLogger.get());
 	    		
 	    		break;
 	    	case "save":

@@ -28,7 +28,9 @@ public class SendJob implements Job{
 				Zimmy.getInstance().api.getServerTextChannelById(channel).ifPresent(ch->{
 					ch.sendMessage("Sent message `#"+eid+"`");
 				});
-				ServerUtil.removeTask(eid, j);
+				
+				if(j.get("e:"+eid+":cron")==null)	//if isnt repeating then delete safely
+					ServerUtil.removeTask(eid, j);
 				
 			}).exceptionally(e->{
 				Zimmy.getInstance().api.getServerTextChannelById(channel).ifPresent(ch->{

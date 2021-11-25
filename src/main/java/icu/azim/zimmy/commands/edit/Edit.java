@@ -171,8 +171,11 @@ public class Edit implements VelenSlashEvent {
 							)).update();
 				}else {
 					try {
-						Zimmy.getInstance().editTime(date, id+"");
 						try(Jedis j = jpool.getResource()){
+							boolean repeat = j.get("e:"+id+":cron")!=null;
+							
+							Zimmy.getInstance().editTime(date, id+"", repeat);
+							
 							ServerUtil.editTaskDate(id+"", date, j);
 						}
 						updater.setContent("Message `#"+id+"` updated.").update();

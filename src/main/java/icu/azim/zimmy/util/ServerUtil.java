@@ -153,7 +153,7 @@ public class ServerUtil {
 		if(j.llen("e:sendAt:"+date)<1) {
 			j.del("e:sendAt:"+date);
 		}
-		j.del(eid+":url", eid+":data", eid+":date", eid+":mention", eid+":server");
+		j.del(eid+":url", eid+":data", eid+":date", eid+":mention", eid+":server", eid+":cron");
 	}
 	
 	public static void editTaskDate(String id, Date date, Jedis j) {

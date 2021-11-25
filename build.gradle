@@ -36,6 +36,9 @@ dependencies {
 	
 	implementation 'redis.clients:jedis:3.3.0'
 	
+	//cron to human readable
+	implementation "it.burning:cron-expression-descriptor:1.2.2"
+	
 	implementation 'org.quartz-scheduler:quartz:2.3.2'
 	implementation 'mysql:mysql-connector-java:8.0.27'
 	

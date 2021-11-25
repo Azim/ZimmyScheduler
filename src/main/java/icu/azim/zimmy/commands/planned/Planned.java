@@ -12,8 +12,10 @@ import org.javacord.api.interaction.SlashCommandInteractionOption;
 import org.javacord.api.interaction.callback.InteractionCallbackDataFlag;
 import org.javacord.api.interaction.callback.InteractionFollowupMessageBuilder;
 import org.javacord.api.interaction.callback.InteractionImmediateResponseBuilder;
+import org.javacord.api.util.logging.ExceptionLogger;
 
 import icu.azim.zimmy.Zimmy;
+import it.burning.cron.CronExpressionDescriptor;
 import pw.mihou.velen.interfaces.VelenArguments;
 import pw.mihou.velen.interfaces.VelenSlashEvent;
 import redis.clients.jedis.Jedis;
@@ -50,12 +52,18 @@ public class Planned implements VelenSlashEvent {
 					if(mention==null) {
 						mention = "`External server`";
 					}
+					String repeat = "`once`";
+					String cron = j.get(eid+":cron");
+					if(cron!=null && !cron.isEmpty()) {
+						repeat = "`"+CronExpressionDescriptor.getDescription(cron)+"`";
+					}
 					
 					followup.removeAllComponents().removeAllEmbeds()
 					.addEmbed(new EmbedBuilder().setDescription(
 							"id: `"+id+"`\n"+
 							"Sending to "+mention+"\n"+
-							"Scheduled time: <t:"+date+":f> (<t:"+date+":R>)"
+							"Scheduled time: <t:"+date+":f> (<t:"+date+":R>)\n"+
+							"Repeat "+repeat
 							)
 							.setFooter("Use /edit to edit planned messages."))
 					.addComponents(ActionRow.of(
@@ -66,7 +74,7 @@ public class Planned implements VelenSlashEvent {
 					.send();
 				}
 			}
-		});
+		}).exceptionally(ExceptionLogger.get());
 	}
 
 }

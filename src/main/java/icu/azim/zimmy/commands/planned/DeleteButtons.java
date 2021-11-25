@@ -58,7 +58,7 @@ public class DeleteButtons implements MessageComponentCreateListener{
 				.addEmbed(new EmbedBuilder().setDescription(
 						"id: `"+id+"`\n"+
 						"Sending to "+mention+"\n"+
-						"Scheduled time: <t:"+date+":f> (<t:"+date+":R>)"
+						"Scheduled time: <t:"+date+":f> (<t:"+date+":R>)" //TODO repeat info
 						)
 						.setFooter("Use /edit to edit planned messages."))
 				.addComponents(ActionRow.of(
