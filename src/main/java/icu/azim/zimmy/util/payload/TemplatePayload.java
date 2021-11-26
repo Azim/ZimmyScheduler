@@ -52,7 +52,7 @@ public class TemplatePayload {
 		this.properties.forEach(property->{
 			j.rpush(key+":properties", property);
 		});
-	}
+	} 
 	
 	public WebhookMessageBuilder toMessage() throws MalformedURLException {
 		JsonObject jobj = new Gson().fromJson(data, JsonObject.class);

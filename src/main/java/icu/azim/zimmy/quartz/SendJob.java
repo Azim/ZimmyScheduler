@@ -29,7 +29,7 @@ public class SendJob implements Job{
 					ch.sendMessage("Sent message `#"+eid+"`");
 				});
 				
-				if(j.get("e:"+eid+":cron")==null)	//if isnt repeating then delete safely
+				if(j.get("e:"+eid+":r:type")==null)
 					ServerUtil.removeTask(eid, j);
 				
 			}).exceptionally(e->{

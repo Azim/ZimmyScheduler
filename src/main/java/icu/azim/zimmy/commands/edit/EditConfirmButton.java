@@ -7,6 +7,7 @@ import org.javacord.api.listener.interaction.MessageComponentCreateListener;
 import org.quartz.SchedulerException;
 
 import icu.azim.zimmy.Zimmy;
+import icu.azim.zimmy.quartz.CronUtil;
 import icu.azim.zimmy.util.ServerUtil;
 import icu.azim.zimmy.util.payload.WebhookPayload;
 import redis.clients.jedis.Jedis;
@@ -30,7 +31,7 @@ public class EditConfirmButton implements MessageComponentCreateListener {
 					messageComponentInteraction.createOriginalMessageUpdater().removeAllComponents().setContent("Message `#"+eid+"` sent.").update();
 					ServerUtil.removeTask(eid, j);
 					try {
-						Zimmy.getInstance().deleteTrigger(eid);
+						CronUtil.deleteTrigger(eid);
 					} catch (SchedulerException e) {
 						messageComponentInteraction.createFollowupMessageBuilder().setFlags(InteractionCallbackDataFlag.EPHEMERAL).setContent("Even though the message was successfully sent, we've got some issues unregistering it. This shouldnt happen often, but if it does please contact [support](https://discord.gg/vxfhytJbeX).").send();
 						e.printStackTrace();

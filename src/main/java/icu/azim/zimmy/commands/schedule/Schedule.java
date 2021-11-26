@@ -171,23 +171,21 @@ public class Schedule implements VelenSlashEvent {
 				updater.addEmbed(new EmbedBuilder().setDescription(
 						"Sending to "+data.channelMention+"\n"+
 						"Entered time is <t:"+ldate+":R>, message will be sent right away.\n"+
-						"Are you sure you want to send it now?"
+						"Are you sure you want to send it now?"	
 						));
 			}else {
 				updater.addEmbed(new EmbedBuilder().setDescription(
 						"Sending to "+data.channelMention+"\n"+
 						"Scheduled time: <t:"+ldate+":f> (<t:"+ldate+":R>)\n"+
+						"Repeat `once`\n"+
 						"Looks good?"
 						));
 			}
-			//TODO store event.getId(), date and data until button is pressed or 15 minutes has passed
+			//store payload until button is pressed or 15 minutes has passed
 			data.date = tdate;
 			try(Jedis j = jpool.getResource()){
 				TempUtil.put(event.getIdAsString(), data, j);
 			}
-			
-			//TempUtil.data.put(event.getIdAsString(), data);
-			//TempUtil.planRemoval(event.getIdAsString(), event.getApi());
 			
 			updater.addComponents(
 					ActionRow.of(
@@ -196,7 +194,7 @@ public class Schedule implements VelenSlashEvent {
 				            Button.danger("schedule:"+event.getId()+":cancel", "Cancel"))
 					).update().thenAccept(a->{
 						a.getApi().getThreadPool().getScheduler().schedule(()->{
-							updater.removeAllComponents().removeAllEmbeds().setContent("Message expired.");
+							updater.removeAllComponents().removeAllEmbeds().setContent(" ").addEmbed(new EmbedBuilder().setDescription("Message expired."));
 						}, 15, TimeUnit.MINUTES);
 					});
 			

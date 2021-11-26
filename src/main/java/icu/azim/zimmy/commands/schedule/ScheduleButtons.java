@@ -15,6 +15,7 @@ import org.javacord.api.util.logging.ExceptionLogger;
 import org.quartz.SchedulerException;
 
 import icu.azim.zimmy.Zimmy;
+import icu.azim.zimmy.quartz.CronUtil;
 import icu.azim.zimmy.util.ServerUtil;
 import icu.azim.zimmy.util.TempUtil;
 import icu.azim.zimmy.util.payload.WebhookPayload;
@@ -78,7 +79,7 @@ public class ScheduleButtons implements MessageComponentCreateListener {
 							);
 				    send(updater,"Message will be sent <t:"+(data.date.getTime()/1000)+":R>\nMessage id is `#"+eid+"`");
 					try {
-						Zimmy.getInstance().registerOnce(data.date, eid+"");
+						CronUtil.registerOnce(data.date, eid+"");
 					} catch (SchedulerException e) {
 						send(updater,"Error occured while scheduling the message `#"+eid+"`.\n"+e.getMessage());
 						e.printStackTrace();

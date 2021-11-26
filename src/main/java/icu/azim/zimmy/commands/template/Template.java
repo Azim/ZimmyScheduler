@@ -67,8 +67,8 @@ public class Template implements VelenSlashEvent {
 		
 		String name = options.get(0).getStringValue().orElseThrow();
 		String discourl = options.get(1).getStringValue().orElseThrow();
-		String tproperties = options.size()>2?options.get(2).getStringValue().orElse(""):"";
-		List<String> properties = tproperties.length()>0?Stream.of(tproperties.split(",")).map(p->p.trim()).distinct().toList():new ArrayList<String>(1);
+		String tvars = options.size()>2?options.get(2).getStringValue().orElse(""):"";
+		List<String> vars = tvars.length()>0?Stream.of(tvars.split(",")).map(p->p.trim()).distinct().toList():new ArrayList<String>(1);
 		String tkey = "t:"+server.getIdAsString()+":"+name;
 		
 		Matcher matcher = Util.templateNameFormat.matcher(name);
@@ -83,7 +83,7 @@ public class Template implements VelenSlashEvent {
 			return;
 		}
 		
-		for(String p:properties) {
+		for(String p:vars) {
 			matcher = Util.templateNameFormat.matcher(p);
 			if(!matcher.matches()) {
 				updater.setContent("Invalid property format. Needs to match `^[\\w-]{1,32}$`.").update();
@@ -96,9 +96,14 @@ public class Template implements VelenSlashEvent {
 				updater.setContent("Such template already exists.").update();
 				return;
 			}
+			if(j.keys("t:"+server.getId()+":*:data").size()>=20) {
+				updater.setContent("You have reached your limit of 20 templates per server. If you need more, please contact bot developer with your use case and we'll discuss increasing it :)").update();
+				return;
+			}
+			
 			TemplatePayload template = new TemplatePayload();
 			template.name = name;
-			template.properties = new ArrayList<String>(properties);
+			template.properties = new ArrayList<String>(vars);
 			try {
 				String result = Util.fromShortHook(discourl);
 				if(result==null) {
@@ -148,11 +153,67 @@ public class Template implements VelenSlashEvent {
 			Server server,
 			InteractionOriginalResponseUpdater updater, 
 			List<SlashCommandInteractionOption> options) {
+		String name = options.get(0).getStringValue().orElseThrow();
+		String tkey = "t:"+server.getIdAsString()+":"+name;
+		String property = options.get(1).getStringValue().orElseThrow();
+		String new_value = options.get(2).getStringValue().orElseThrow();
 		
-		//TODO implemend editing of templates
-		//String name = options.get(0).getStringValue().orElseThrow();
-		//String tkey = "t:"+server.getIdAsString()+":"+name;
-		updater.setContent("not implemented yet, and how is it different from deleting old one and creating a new one with this layout anyway?").update();
+		try(Jedis j = jpool.getResource()){
+			if(!j.exists(tkey+":data")) {
+				updater.setContent("Such template doesnt exist.").update();
+				return;
+			}
+			TemplatePayload payload = TemplatePayload.fromJedis(name, server.getIdAsString(), j);
+			switch(property) {
+			case "name":
+				Matcher matcher = Util.templateNameFormat.matcher(new_value);
+				if(!matcher.matches()) {
+					updater.setContent("Invalid name format. Needs to match `^[\\w-]{1,32}$`.").update();
+					return;
+				}
+				payload.name = new_value;
+				j.del(tkey+":data", tkey+":properties");
+				break;
+			case "discohook_url":
+				matcher = Util.shortDiscoHook.matcher(new_value);
+				if(!matcher.matches()) {
+					updater.setContent("Invalid discohook url.").update();
+					return;
+				}
+				try {
+					String result = Util.fromShortHook(new_value);
+					if(result==null) {
+						updater.setContent("Invalid discohook url, try again").update();
+						return;
+					}
+					payload.data = result;
+				} catch (IOException e) {
+					updater.setContent("Invalid discohook url, try again").update();
+					return;
+				} catch (IllegalArgumentException e) {
+					e.printStackTrace();
+					updater.setContent("Unknown error:\n`"+e.getMessage()+"`").update();
+					return;
+				}
+				
+				break;
+			case "variables":
+				List<String> vars = new_value.length()>0?Stream.of(new_value.split(",")).map(p->p.trim()).distinct().toList():new ArrayList<String>(1);
+				for(String p:vars) {
+					matcher = Util.templateNameFormat.matcher(p);
+					if(!matcher.matches()) {
+						updater.setContent("Invalid property format. Needs to match `^[\\w-]{1,32}$`.").update();
+						return;
+					}
+				}
+				payload.properties = new ArrayList<String>(vars);
+				break;
+			}
+			payload.saveToJedis(server.getIdAsString(), j);
+			Zimmy.getInstance().updateTemplateCommand(server, j);
+			Zimmy.getInstance().syncServerCommands(server);
+			updater.setContent("Updated template `"+name+"`.").update();
+		}
 	}
 
 	private void onList(JedisPool jpool, 
@@ -178,7 +239,7 @@ public class Template implements VelenSlashEvent {
 				if(template.properties.isEmpty()) {
 					description+="No variables";
 				}else {
-					description+=("Variables:\n'"+String.join("`\n`", template.properties)+"`");
+					description+=("Variables:\n`"+String.join("`\n`", template.properties)+"`");
 				}
 				followup.setFlags(InteractionCallbackDataFlag.EPHEMERAL).removeAllEmbeds().addEmbed(new EmbedBuilder()
 						.setTitle(name)

@@ -34,7 +34,7 @@ dependencies {
 	//implementation 'com.github.Joshix-1:Javacord:Jemand-SNAPSHOT'
 	//implementation 'com.github.Joshix-1:Javacord:e5b6a2e'
 	
-	implementation 'redis.clients:jedis:3.3.0'
+	implementation 'redis.clients:jedis:3.7.0'
 	
 	//cron to human readable
 	implementation "it.burning:cron-expression-descriptor:1.2.2"

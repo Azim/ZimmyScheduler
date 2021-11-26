@@ -11,10 +11,10 @@ public class TempUtil {
 	public static void put(String key, WebhookPayload payload, Jedis j) {
 		key = "temp:"+key;
 		
-		j.set(key+":date", payload.date.getTime()+"", SetParams.setParams().ex(60*15));
-		j.set(key+":url", payload.url, SetParams.setParams().ex(60*15));
-		j.set(key+":data", payload.json, SetParams.setParams().ex(60*15));
-		j.set(key+":mention", payload.channelMention, SetParams.setParams().ex(60*15));
+		j.set(key+":date", payload.date.getTime()+"", SetParams.setParams().ex(60*15L));
+		j.set(key+":url", payload.url, SetParams.setParams().ex(60*15L));
+		j.set(key+":data", payload.json, SetParams.setParams().ex(60*15L));
+		j.set(key+":mention", payload.channelMention, SetParams.setParams().ex(60*15L));
 		
 	}
 	

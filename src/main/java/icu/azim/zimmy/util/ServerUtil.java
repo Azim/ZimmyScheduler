@@ -110,7 +110,11 @@ public class ServerUtil {
 	 * [e:ID:date]			- date
 	 * [e:ID:mention]		- string
 	 * [e:ID:server]		- long
-	 * [e:ID:repeat]		- long (repeat interval in millis)
+	 * [e:ID:r:type]		- string
+	 * [e:ID:r:pattern]		- string
+	 * 
+	 * [t:serverid:name:data] - json
+	 * [t:serverid:name:properties] - properties
 	 * 
 	 */
 	public static long saveTask(WebhookPayload data, Date date, Long server, JedisPool jpool) {
@@ -153,7 +157,7 @@ public class ServerUtil {
 		if(j.llen("e:sendAt:"+date)<1) {
 			j.del("e:sendAt:"+date);
 		}
-		j.del(eid+":url", eid+":data", eid+":date", eid+":mention", eid+":server", eid+":cron");
+		j.del(eid+":url", eid+":data", eid+":date", eid+":mention", eid+":server", eid+":r:type", eid+":r:pattern");
 	}
 	
 	public static void editTaskDate(String id, Date date, Jedis j) {

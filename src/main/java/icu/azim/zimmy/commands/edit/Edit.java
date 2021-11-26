@@ -29,6 +29,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
 import icu.azim.zimmy.Zimmy;
+import icu.azim.zimmy.quartz.CronUtil;
 import icu.azim.zimmy.util.ServerUtil;
 import icu.azim.zimmy.util.Util;
 import pw.mihou.velen.interfaces.VelenArguments;
@@ -172,10 +173,7 @@ public class Edit implements VelenSlashEvent {
 				}else {
 					try {
 						try(Jedis j = jpool.getResource()){
-							boolean repeat = j.get("e:"+id+":cron")!=null;
-							
-							Zimmy.getInstance().editTime(date, id+"", repeat);
-							
+							CronUtil.editTime(date, id+"");
 							ServerUtil.editTaskDate(id+"", date, j);
 						}
 						updater.setContent("Message `#"+id+"` updated.").update();

@@ -1,6 +1,7 @@
 package icu.azim.zimmy.commands.planned;
 
 import java.io.IOException;
+import java.util.Date;
 
 import org.javacord.api.entity.channel.ServerTextChannel;
 import org.javacord.api.entity.message.component.ActionRow;
@@ -12,8 +13,10 @@ import org.javacord.api.interaction.MessageComponentInteraction;
 import org.javacord.api.interaction.callback.InteractionCallbackDataFlag;
 import org.javacord.api.listener.interaction.MessageComponentCreateListener;
 import org.javacord.api.util.logging.ExceptionLogger;
+import org.quartz.SchedulerException;
 
 import icu.azim.zimmy.Zimmy;
+import icu.azim.zimmy.quartz.CronUtil;
 import icu.azim.zimmy.util.ServerUtil;
 import icu.azim.zimmy.util.Util;
 import icu.azim.zimmy.util.payload.WebhookPayload;
@@ -60,10 +63,12 @@ public class PlannedButtons implements MessageComponentCreateListener {
 				try {
 					String url = Util.shortenHook(data.json);
 					Long date = Long.valueOf(j.get("e:"+eid+":date"))/1000;
+					
 					event.getMessageComponentInteraction().createOriginalMessageUpdater().removeAllEmbeds().addEmbed(new EmbedBuilder().setDescription(
-							"`#"+eid+"`\n"+
+							"id: `"+eid+"`\n"+
 							"Sending to "+data.channelMention+"\n"+
 							"Scheduled time: <t:"+date+":f> (<t:"+date+":R>)\n"+
+							"Repeat "+CronUtil.getRepeatString("e:"+eid, j)+"\n"+
 							"[Discohook url]("+url+")"
 							)
 							.setFooter("Use /edit to edit planned messages."))
@@ -84,6 +89,47 @@ public class PlannedButtons implements MessageComponentCreateListener {
 						Button.danger("delete:"+eid+":yes", "Delete"),
 			            Button.secondary("delete:"+eid+":cancel", "Cancel")))
 				.update();
+				
+				break;
+			case "unschedule":
+				Date date = new Date(Long.valueOf(j.get("e:"+eid+":date")));
+				if(date.before(new Date())) {
+					event.getMessageComponentInteraction().createOriginalMessageUpdater().removeAllComponents().setContent(" ").removeAllEmbeds()
+					.addEmbed(new EmbedBuilder().setDescription("This message already was sent before, it will be deleted entirely.\nAre you sure you want to delete this message?"))
+					.addComponents(ActionRow.of(
+							Button.danger("delete:"+eid+":yes", "Delete"),
+				            Button.secondary("delete:"+eid+":cancel", "Cancel")))
+					.update();
+					return;
+				}
+				try {
+					if(!CronUtil.makeRepeatOnce(eid)) {
+						event.getMessageComponentInteraction().createOriginalMessageUpdater().removeAllComponents().setContent(" ").removeAllEmbeds()
+						.addEmbed(new EmbedBuilder().setDescription("Message not found in the database. Try changing it's date to fix that."))
+						.update();
+						return;
+					}
+					j.del("e:"+eid+":r:type", "e:"+eid+":r:pattern");
+					Long ldate = Long.valueOf(j.get("e:"+eid+":date"))/1000;
+					event.getMessageComponentInteraction().createOriginalMessageUpdater().removeAllEmbeds().addEmbed(new EmbedBuilder().setDescription(
+							"id: `"+eid+"`\n"+
+							"Sending to "+data.channelMention+"\n"+
+							"Scheduled time: <t:"+ldate+":f> (<t:"+ldate+":R>)\n"+
+							"Repeat "+CronUtil.getRepeatString("e:"+eid, j)
+							)
+							.setFooter("Use /edit to edit planned messages."))
+					.removeAllComponents().addComponents(ActionRow.of(
+							Button.secondary("planned:"+eid+":preview", "Preview"),
+				            Button.secondary("planned:"+eid+":discohook", "Generate Discohook url"),
+				            Button.danger("planned:"+eid+":delete", "Delete")))
+					.setContent("")
+					.update();
+				} catch (SchedulerException e) {
+					event.getMessageComponentInteraction().createOriginalMessageUpdater().removeAllComponents().setContent(" ").removeAllEmbeds()
+					.addEmbed(new EmbedBuilder().setDescription("Error while changing schedule.\n`"+e.getMessage()+"`"))
+					.update();
+					return;
+				}
 				
 				break;
 			}

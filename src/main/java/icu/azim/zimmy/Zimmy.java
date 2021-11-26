@@ -5,11 +5,9 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
@@ -25,16 +23,12 @@ import org.javacord.api.interaction.SlashCommandOption;
 import org.javacord.api.interaction.SlashCommandOptionChoice;
 import org.javacord.api.interaction.SlashCommandOptionType;
 import org.javacord.api.util.logging.ExceptionLogger;
-import org.quartz.CronScheduleBuilder;
 import org.quartz.JobBuilder;
 import org.quartz.JobDetail;
 import org.quartz.JobKey;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.SchedulerFactory;
-import org.quartz.Trigger;
-import org.quartz.TriggerBuilder;
-import org.quartz.TriggerKey;
 import org.quartz.impl.StdSchedulerFactory;
 
 import icu.azim.zimmy.commands.configure.Configure;
@@ -110,8 +104,11 @@ public class Zimmy {
 	 * [e:ID:date]			- date
 	 * [e:ID:mention]		- string
 	 * [e:ID:server]		- long
-	 * [e:ID:cron]			- string
+	 * [e:ID:r:type]		- string
+	 * [e:ID:r:pattern]		- string
 	 * 
+	 * [t:serverid:name:data] - json
+	 * [t:serverid:name:properties] - properties
 	 */
 	
 	
@@ -270,71 +267,6 @@ public class Zimmy {
 		CronExpressionDescriptor.setDefaultLocale("en");
 	}
 	
-	
-	public void registerOnce(Date date, String id) throws SchedulerException {
-		if(scheduler.checkExists(new TriggerKey("triggerOnce_"+id))) {
-			return;
-		}
-		Trigger t = TriggerBuilder.newTrigger()
-				.withIdentity("triggerOnce_"+id)
-				.usingJobData("eid", id)
-				.forJob(new JobKey("send"))
-				.startAt(date)
-				.build();
-		scheduler.scheduleJob(t);
-	}
-	
-	public boolean makeRepeat(String server, String id, String cron) throws SchedulerException {
-		try(Jedis j = getPool().getResource()){
-			String timezone = j.get("s:"+server+":timezone");
-			if(timezone==null) {
-				timezone = "GMT";
-			}
-			TriggerKey oldKey = new TriggerKey("triggerOnce_"+id);
-			if(!scheduler.checkExists(oldKey)) {
-				oldKey = new TriggerKey("triggerRepeat_"+id);
-				if(!scheduler.checkExists(oldKey)) {
-					return false;
-				}
-			}
-			Trigger t = scheduler.getTrigger(oldKey);
-			Date date = t.getStartTime();
-			scheduler.unscheduleJob(oldKey);
-			
-			t = TriggerBuilder.newTrigger()
-					.withIdentity("triggerRepeat_"+id)
-					.usingJobData("eid", id)
-					.forJob(new JobKey("send"))
-					.startAt(date)
-					.withSchedule(CronScheduleBuilder.cronSchedule(cron).inTimeZone(TimeZone.getTimeZone(timezone)).withMisfireHandlingInstructionDoNothing())
-					.build();
-			scheduler.scheduleJob(t);
-		}
-		return true;
-	}
-	
-	public void deleteTrigger(String id) throws SchedulerException {
-		TriggerKey t = new TriggerKey("triggerOnce_"+id);
-		if(scheduler.checkExists(t)) {
-			scheduler.unscheduleJob(t);
-		}
-		t = new TriggerKey("triggerRepeat_"+id);
-		if(scheduler.checkExists(t)) {
-			scheduler.unscheduleJob(t);
-		}
-	}
-	
-	public void editTime(Date date, String id, boolean repeat) throws SchedulerException {
-		TriggerKey key = new TriggerKey((repeat?"triggerRepeat_":"triggerOnce_")+id);
-		if(scheduler.checkExists(key)) {
-			Trigger t = scheduler.getTrigger(key);
-			t = t.getTriggerBuilder().startAt(date).build();
-			scheduler.rescheduleJob(t.getKey(), t);
-		}else {
-			registerOnce(date, id);
-		}
-	}
-	
 	private void registerCommands() {
 		velen.addSlashMiddleware("server check",
 				(event, command, gate) -> {
@@ -438,14 +370,17 @@ public class Zimmy {
 							SlashCommandOption.create(SlashCommandOptionType.STRING, "discohook_url", "Discohook message url", true),
 							SlashCommandOption.create(SlashCommandOptionType.STRING, "variables", "Variables used in template, separated by comma (,)", false)
 							)),
+					
 					SlashCommandOption.create(SlashCommandOptionType.SUB_COMMAND, "list", "Show existing templates"),
-					/*
+					
 					SlashCommandOption.createWithOptions(SlashCommandOptionType.SUB_COMMAND, "edit", "Edit a template", Arrays.asList(
-							SlashCommandOption.create(SlashCommandOptionType.STRING, "name", "Name of template to edit", true),
-							SlashCommandOption.create(SlashCommandOptionType.STRING, "new_name", "New name of the template", true),
-							SlashCommandOption.create(SlashCommandOptionType.STRING, "new_discohook_url", "New discohook message url", true),
-							SlashCommandOption.create(SlashCommandOptionType.STRING, "new_variables", "New variables, separated by comma (,)", false) //TODO dont forget orElse("")
-							)),*/
+							SlashCommandOption.create(SlashCommandOptionType.STRING, "name", "name of the template you want to edit", true),
+							SlashCommandOption.createWithChoices(SlashCommandOptionType.STRING, "property", "Which property of the template do you want to edit?", true, Arrays.asList(
+									SlashCommandOptionChoice.create("name", "name"),
+									SlashCommandOptionChoice.create("discohook_url", "discohook_url"),
+									SlashCommandOptionChoice.create("variables", "variables"))),
+							SlashCommandOption.create(SlashCommandOptionType.STRING, "new_value", "New value of the property", true))),
+					
 					SlashCommandOption.createWithOptions(SlashCommandOptionType.SUB_COMMAND, "delete", "Delete a template", Arrays.asList(
 							SlashCommandOption.create(SlashCommandOptionType.STRING, "name", "Name of the template to delete", true)
 							))
@@ -453,17 +388,17 @@ public class Zimmy {
 			.addMiddlewares("server check", "configuration check", "permission check")
 			.attach();
 		
-		VelenCommand.ofSlash("repeat", "make message repeat", velen, new Repeat())
+		VelenCommand.ofSlash("repeat", "Make message be sent repeatedly after it's planned date on given schedule", velen, new Repeat())
 			.addOptions(
 					SlashCommandOption.create(SlashCommandOptionType.INTEGER, "id", "id of the message you want to repeat", true),
-					SlashCommandOption.create(SlashCommandOptionType.STRING, "cron", "cron expression of repeat schedule", true)
+					SlashCommandOption.createWithChoices(SlashCommandOptionType.STRING, "type", "Type of the repeat schedule to use", true, Arrays.asList(
+							SlashCommandOptionChoice.create("cron", "cron"),
+							SlashCommandOptionChoice.create("minutes", "minutes"))),
+					SlashCommandOption.create(SlashCommandOptionType.STRING, "expression", "Expression of repeat schedule", true)
 					)
 			.addMiddlewares("server check", "configuration check", "permission check")
 			.attach();
-		
 	}
-	
-	
 	
 	private void setupStats(DiscordApi api, String token) {
 		String botid = api.getYourself().getIdAsString();

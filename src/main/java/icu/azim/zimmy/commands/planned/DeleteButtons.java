@@ -6,11 +6,13 @@ import org.javacord.api.entity.message.component.Button;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.event.interaction.MessageComponentCreateEvent;
 import org.javacord.api.interaction.MessageComponentInteraction;
+import org.javacord.api.interaction.callback.ComponentInteractionOriginalMessageUpdater;
 import org.javacord.api.interaction.callback.InteractionCallbackDataFlag;
 import org.javacord.api.listener.interaction.MessageComponentCreateListener;
 import org.quartz.SchedulerException;
 
 import icu.azim.zimmy.Zimmy;
+import icu.azim.zimmy.quartz.CronUtil;
 import icu.azim.zimmy.util.ServerUtil;
 import redis.clients.jedis.Jedis;
 
@@ -35,7 +37,7 @@ public class DeleteButtons implements MessageComponentCreateListener{
 			switch(type) {
 			case "yes":
 				try {
-					Zimmy.getInstance().deleteTrigger(id);
+					CronUtil.deleteTrigger(id);
 					ServerUtil.removeTask(id, j);
 					messageComponentInteraction.createOriginalMessageUpdater().removeAllComponents().removeAllEmbeds()
 					.setContent(" ")
@@ -54,19 +56,30 @@ public class DeleteButtons implements MessageComponentCreateListener{
 				if(mention==null) {
 					mention = "`External server`";
 				}
-				messageComponentInteraction.createOriginalMessageUpdater().removeAllComponents().removeAllEmbeds()
+				ComponentInteractionOriginalMessageUpdater updater = messageComponentInteraction.createOriginalMessageUpdater().removeAllComponents().removeAllEmbeds()
 				.addEmbed(new EmbedBuilder().setDescription(
 						"id: `"+id+"`\n"+
 						"Sending to "+mention+"\n"+
-						"Scheduled time: <t:"+date+":f> (<t:"+date+":R>)" //TODO repeat info
+						"Scheduled time: <t:"+date+":f> (<t:"+date+":R>)\n"+
+						"Repeat "+CronUtil.getRepeatString(eid, j)
 						)
 						.setFooter("Use /edit to edit planned messages."))
-				.addComponents(ActionRow.of(
-						Button.secondary("planned:"+id+":preview", "Preview"),
-			            Button.secondary("planned:"+id+":discohook", "Generate Discohook url"),
-			            Button.danger("planned:"+id+":delete", "Delete")))
-				.setContent(" ")
-				.update();
+				.setContent(" ");
+
+				if(j.exists(eid+":r:type")) {
+					updater.addComponents(ActionRow.of(
+							Button.secondary("planned:"+id+":preview", "Preview"),
+				            Button.secondary("planned:"+id+":discohook", "Generate Discohook url"),
+				            Button.danger("planned:"+id+":delete", "Delete"),
+				            Button.danger("planned:"+id+":unschedule", "Stop repeating")))
+					.update();
+				}else {
+					updater.addComponents(ActionRow.of(
+							Button.secondary("planned:"+id+":preview", "Preview"),
+				            Button.secondary("planned:"+id+":discohook", "Generate Discohook url"),
+				            Button.danger("planned:"+id+":delete", "Delete")))
+					.update();
+				}
 				break;
 			}
 		}

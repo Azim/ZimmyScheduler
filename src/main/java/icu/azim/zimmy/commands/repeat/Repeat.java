@@ -14,7 +14,7 @@ import org.quartz.CronExpression;
 import org.quartz.SchedulerException;
 
 import icu.azim.zimmy.Zimmy;
-import it.burning.cron.CronExpressionDescriptor;
+import icu.azim.zimmy.quartz.CronUtil;
 import pw.mihou.velen.interfaces.VelenArguments;
 import pw.mihou.velen.interfaces.VelenSlashEvent;
 import redis.clients.jedis.Jedis;
@@ -32,32 +32,66 @@ public class Repeat implements VelenSlashEvent {
 			Server server = event.getServer().orElseThrow();
 			
 			Long id = options.get(0).getLongValue().orElseThrow();
-			String expression = options.get(1).getStringValue().orElseThrow();
+			String type  = options.get(1).getStringValue().orElseThrow();
+			String expression = options.get(2).getStringValue().orElseThrow();
 			
 			try(Jedis j = Zimmy.getInstance().getPool().getResource()){
+				
 				if(!j.exists("e:"+id+":data")) {
 					updater.setContent("Message not found!").update();
 					return;
 				}
-				if(!CronExpression.isValidExpression(expression)) {
-					updater.setContent("Invalid [cron](https://www.freeformatter.com/cron-expression-generator-quartz.html#cronexpressionexamples) expression!").update();
-					return;
-				}
-				if(!satisfiesLimit(expression)) {
-					updater.setContent("Message will repeat too fast! Please make at least 30 minutes between executions.").update();
-					return;
-				}
 				
-				j.set("e:"+id+":cron", expression);
-				try {
-					Zimmy.getInstance().makeRepeat(server.getIdAsString(), id+"", expression);
-				} catch (SchedulerException e) {
-					updater.setContent("Exception while making message repeat!\n`"+e.getMessage()+"`").update();
-					return;
+				switch(type) {
+				case "cron":
+					if(!CronExpression.isValidExpression(expression)) {
+						updater.setContent("Invalid [cron](https://www.freeformatter.com/cron-expression-generator-quartz.html#cronexpressionexamples) expression!").update();
+						return;
+					}
+					if(!satisfiesLimit(expression)) {
+						updater.setContent("Message will repeat too fast! Please make at least 30 minutes between executions.").update();
+						return;
+					}
+					j.set("e:"+id+":r:type", "cron");
+					j.set("e:"+id+":r:pattern", expression);
+					try {
+						if(!CronUtil.makeRepeatCron(server.getIdAsString(), id+"", expression)) {
+							updater.setContent("Message not found in database! Please contact administrator if you get this message often. \nAs a workaround, try editing the message and changing it's planned date.").update();
+							return;
+						}
+					} catch (SchedulerException e) {
+						updater.setContent("Exception while making message repeat!\n`"+e.getMessage()+"`").update();
+						return;
+					}
+					updater.setContent("Message `#"+id+"` will be repeating "+CronUtil.getRepeatString("e:"+id, j)).update();
+					break;
+				case "minutes":
+					try {
+						int minutes = Integer.valueOf(expression);
+						if(minutes<30) {
+							updater.setContent("Message will repeat too fast! Please make at least 30 minutes between executions.").update();
+							return;
+						}
+						j.set("e:"+id+":r:type", "minutes");
+						j.set("e:"+id+":r:pattern", minutes+"");
+						try {
+							if(!CronUtil.makeRepeatMinutes(server.getIdAsString(), id+"", minutes)) {
+								updater.setContent("Message not found in database! Please contact administrator if you get this message often. \nAs a workaround, try editing the message and changing it's planned date.").update();
+								return;
+							}
+						} catch (SchedulerException e) {
+							updater.setContent("Exception while making message repeat!\n`"+e.getMessage()+"`").update();
+							return;
+						}
+						updater.setContent("Message `#"+id+"` will be repeating "+CronUtil.getRepeatString("e:"+id, j)).update();
+						
+					} catch(NumberFormatException e) {
+						updater.setContent("Expected a *number* of minutes").update();
+						return;
+					}
+					break;
 				}
-				updater.setContent("Message `#"+id+"` will be repeating "+CronExpressionDescriptor.getDescription(expression)+"\n`"+expression+"`").update();
 			}
-			
 		}).exceptionally(ExceptionLogger.get());
 	}
 	

@@ -15,7 +15,7 @@ import org.javacord.api.interaction.callback.InteractionImmediateResponseBuilder
 import org.javacord.api.util.logging.ExceptionLogger;
 
 import icu.azim.zimmy.Zimmy;
-import it.burning.cron.CronExpressionDescriptor;
+import icu.azim.zimmy.quartz.CronUtil;
 import pw.mihou.velen.interfaces.VelenArguments;
 import pw.mihou.velen.interfaces.VelenSlashEvent;
 import redis.clients.jedis.Jedis;
@@ -52,26 +52,29 @@ public class Planned implements VelenSlashEvent {
 					if(mention==null) {
 						mention = "`External server`";
 					}
-					String repeat = "`once`";
-					String cron = j.get(eid+":cron");
-					if(cron!=null && !cron.isEmpty()) {
-						repeat = "`"+CronExpressionDescriptor.getDescription(cron)+"`";
-					}
 					
 					followup.removeAllComponents().removeAllEmbeds()
 					.addEmbed(new EmbedBuilder().setDescription(
 							"id: `"+id+"`\n"+
 							"Sending to "+mention+"\n"+
 							"Scheduled time: <t:"+date+":f> (<t:"+date+":R>)\n"+
-							"Repeat "+repeat
-							)
+							"Repeat "+CronUtil.getRepeatString(eid, j))
 							.setFooter("Use /edit to edit planned messages."))
-					.addComponents(ActionRow.of(
-							Button.secondary("planned:"+id+":preview", "Preview"),
-				            Button.secondary("planned:"+id+":discohook", "Generate Discohook url"),
-				            Button.danger("planned:"+id+":delete", "Delete")))
-					.setContent("")
-					.send();
+					.setContent("");
+					if(j.exists(eid+":r:type")) {
+						followup.addComponents(ActionRow.of(
+								Button.secondary("planned:"+id+":preview", "Preview"),
+					            Button.secondary("planned:"+id+":discohook", "Generate Discohook url"),
+					            Button.danger("planned:"+id+":delete", "Delete"),
+					            Button.danger("planned:"+id+":unschedule", "Stop repeating")))
+						.send();
+					}else {
+						followup.addComponents(ActionRow.of(
+								Button.secondary("planned:"+id+":preview", "Preview"),
+					            Button.secondary("planned:"+id+":discohook", "Generate Discohook url"),
+					            Button.danger("planned:"+id+":delete", "Delete")))
+						.send();
+					}
 				}
 			}
 		}).exceptionally(ExceptionLogger.get());
