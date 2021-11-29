@@ -29,7 +29,7 @@ public class Help implements VelenSlashEvent {
 						"`/configure` - configure the bot (initial setup, control role and channel, timezone)\n"+
 						"`/schedule` - prepare a message to be sent sometime somewhere\n"+
 						"`/planned` - show planned messages\n"+
-						"`/repeat` - repeat existing planned message (either each X minutes or according to [cron](https://www.freeformatter.com/cron-expression-generator-quartz.html#cronexpressionexamples) schedule\n"+
+						"`/repeat` - repeat existing planned message (either each X minutes or according to [cron](https://www.freeformatter.com/cron-expression-generator-quartz.html#cronexpressionexamples) schedule)\n"+
 						"`/edit` - edit planned message\n\n"+
 						"`/template create` - create new template. Watch out for optional variables option ([example](https://antti.link/vBUl7o))\n"+
 						"`/template list` - show existing templates\n"+

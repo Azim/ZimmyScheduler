@@ -33,4 +33,11 @@ public class Statistics {
 		json.addProperty("server_count", count);
 		sendPost(api, apiToken, json.toString());
 	}
+	public static void sendDiscordExtremeList(int count, String botid, String apiToken) {
+		if(apiToken==null)return;
+		String api = String.format("https://api.discordextremelist.xyz/v2/bot/%s/stats", botid);
+		JsonObject json = new JsonObject();
+		json.addProperty("guildCount", count);
+		sendPost(api, apiToken, json.toString());
+	}
 }

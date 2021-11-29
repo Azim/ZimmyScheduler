@@ -16,7 +16,7 @@ public class BotConfig {
 	
 	public String qHost, qUser, qPassword;
 	
-	public String weatherToken, topggToken;
+	public String weatherToken, topggToken, dellyToken;
 	
 	public static BotConfig fromEnv() {
 		BotConfig cfg = new BotConfig();
@@ -33,6 +33,7 @@ public class BotConfig {
 		
 		cfg.topggToken = System.getenv("topggToken");
 		cfg.weatherToken = System.getenv("weatherToken");
+		cfg.dellyToken = System.getenv("dellyToken");
 		
 		return cfg;
 	}

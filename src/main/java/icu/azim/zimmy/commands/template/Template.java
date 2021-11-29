@@ -226,10 +226,12 @@ public class Template implements VelenSlashEvent {
 				updater.setContent("No templates saved.").update();
 				return;
 			}
-			for(String data:j.keys("t:"+server.getId()+":*:data")) {
-				String name = data.split(":")[2];
+			j.keys("t:"+server.getId()+":*:data")
+			.stream()
+			.map(k->k.split(":")[2])
+			.sorted()
+			.forEachOrdered(name->{
 				TemplatePayload template = TemplatePayload.fromJedis(name, server.getIdAsString(), j);
-				
 				String description = "";
 				try {
 					description = "[Discohook url]("+Util.shortenHook(template.data)+")\n";
@@ -245,7 +247,7 @@ public class Template implements VelenSlashEvent {
 						.setTitle(name)
 						.setDescription(description))
 				.send();
-			}
+			});
 		}
 	}
 }
