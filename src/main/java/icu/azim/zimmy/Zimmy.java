@@ -438,15 +438,12 @@ public class Zimmy {
 		try(Jedis j = jedisPool.getResource()){
 			for(Server s:api.getServers()) {
 				updateTemplateCommand(s, j);
+				syncServerCommands(s);
 			}
 		}
-		syncServerCommands();
 	}
 	
 	public void updateTemplateCommand(Server server, Jedis j) {
-		api.getServerSlashCommands(server).thenAccept(cmds->{
-			cmds.forEach(cmd->cmd.deleteForServer(server));
-		}).exceptionally(ExceptionLogger.get()).join();
 		velen.getCommand("template", server.getId()).ifPresent(cmd->{
 			velen.removeCommand(cmd);
 		});
@@ -473,6 +470,6 @@ public class Zimmy {
 	}
 	
 	public void syncServerCommands() {
-		observer.observeServer(velen, api);
+		observer.observeAllServers(velen, api);
 	}
 }
