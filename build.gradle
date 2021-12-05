@@ -30,7 +30,7 @@ dependencies {
 	implementation 'org.javacord:javacord-core:3.4.0-SNAPSHOT'
 	
 	//implementation 'pw.mihou:Velen:e4b2e168e3'
-	implementation 'pw.mihou:Velen:v3.1.0'
+	implementation 'pw.mihou:Velen:c97d4492ce'
 	//implementation 'com.github.Joshix-1:Javacord:Jemand-SNAPSHOT'
 	//implementation 'com.github.Joshix-1:Javacord:e5b6a2e'
 	

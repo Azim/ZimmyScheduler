@@ -89,15 +89,14 @@ public class TemplateUse implements VelenSlashEvent {
 						mention.set(channel.getMentionTag());
 					}
 				}, ()->{	//no channel mention, check if url
-					String webhook = options.get(2).getStringValue().orElseThrow();
-					Matcher matcher = DiscordRegexPattern.WEBHOOK_URL.matcher(webhook);
+					Matcher matcher = DiscordRegexPattern.WEBHOOK_URL.matcher(dest);
 					if(!matcher.matches()) {
 						responder.setContent("Invalid url, try again.").update();
 						stop.set(true);
 						return;
 					}
 					try {
-						event.getApi().getIncomingWebhookByUrl(webhook).join(); //check if webhook exists
+						event.getApi().getIncomingWebhookByUrl(dest).join(); //check if webhook exists
 						mention.set("`External server`");
 					}catch(CompletionException e) {
 						if(e.getCause() instanceof MissingPermissionsException) {
@@ -108,7 +107,7 @@ public class TemplateUse implements VelenSlashEvent {
 							return;
 						}
 					}
-					url.set(webhook);
+					url.set(dest);
 				});
 				if(stop.get()) {
 					return;

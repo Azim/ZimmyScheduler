@@ -22,7 +22,6 @@ import org.javacord.api.entity.user.User;
 import org.javacord.api.interaction.SlashCommandOption;
 import org.javacord.api.interaction.SlashCommandOptionChoice;
 import org.javacord.api.interaction.SlashCommandOptionType;
-import org.javacord.api.util.logging.ExceptionLogger;
 import org.quartz.JobBuilder;
 import org.quartz.JobDetail;
 import org.quartz.JobKey;
@@ -297,7 +296,7 @@ public class Zimmy {
 					if(server.isAdmin(user)) {
 						return gate.allow();
 					}
-					return gate.deny("You can't use this command.");
+					return gate.deny("Only server administrators can use this command.");
             });
 		velen.addSlashMiddleware("configuration check",
 				(event, command, gate) -> {
@@ -336,7 +335,7 @@ public class Zimmy {
 		
 		VelenCommand.ofSlash("edit", "Edit planned message", velen, new Edit())
 			.addOptions(
-					SlashCommandOption.create(SlashCommandOptionType.INTEGER, "id", "id of the message you want to edit", true),
+					SlashCommandOption.create(SlashCommandOptionType.LONG, "id", "id of the message you want to edit", true),
 					SlashCommandOption.createWithChoices(SlashCommandOptionType.STRING, "property", "Which property of planned message do you want to edit?", true, Arrays.asList(
 							SlashCommandOptionChoice.create("destination", "destination"),
 							SlashCommandOptionChoice.create("discohook_url", "discohook_url"),
@@ -357,7 +356,7 @@ public class Zimmy {
 									SlashCommandOptionChoice.create("timzeone", "timezone"))),
 							SlashCommandOption.create(SlashCommandOptionType.STRING, "new_value", "New value of the property", true)))
 					)
-			.addMiddlewares("server check", "admin check", "permission check")
+			.addMiddlewares("server check", "admin check")
 			.attach();
 
 		VelenCommand.ofSlash("help", "Show something helpful maybe", velen, new Help())
@@ -390,7 +389,7 @@ public class Zimmy {
 		
 		VelenCommand.ofSlash("repeat", "Make message be sent repeatedly after it's planned date on given schedule", velen, new Repeat())
 			.addOptions(
-					SlashCommandOption.create(SlashCommandOptionType.INTEGER, "id", "id of the message you want to repeat", true),
+					SlashCommandOption.create(SlashCommandOptionType.LONG, "id", "id of the message you want to repeat", true),
 					SlashCommandOption.createWithChoices(SlashCommandOptionType.STRING, "type", "Type of the repeat schedule to use", true, Arrays.asList(
 							SlashCommandOptionChoice.create("cron", "cron"),
 							SlashCommandOptionChoice.create("minutes", "minutes"))),
@@ -447,7 +446,11 @@ public class Zimmy {
 		velen.getCommand("template", server.getId()).ifPresent(cmd->{
 			velen.removeCommand(cmd);
 		});
-		List<SlashCommandOption> subcommands = j.keys("t:"+server.getIdAsString()+":*:data").stream().map(key->TemplatePayload.fromJedis(key.split(":")[2], server.getIdAsString(),j)).filter(t->t!=null).map(template->createTemplateSubcommand(template)).toList();
+		List<SlashCommandOption> subcommands = j.keys("t:"+server.getIdAsString()+":*:data").stream().map(key->{
+			System.out.println("Command "+key.split(":")[2]+" : "+server.getId()+ ":"+server.getIdAsString());
+			return TemplatePayload.fromJedis(key.split(":")[2], server.getIdAsString(),j);
+		}).filter(t->t!=null).map(template->createTemplateSubcommand(template)).toList();
+		
 		VelenCommand.ofSlash("template", "Manage templates", velen, templateHandler) 
 			.addOptions(SlashCommandOption.createWithOptions(SlashCommandOptionType.SUB_COMMAND_GROUP, "use", "Use saved template", subcommands))
 			.addMiddlewares("server check", "configuration check", "permission check")

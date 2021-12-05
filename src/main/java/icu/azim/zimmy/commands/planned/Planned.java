@@ -44,7 +44,7 @@ public class Planned implements VelenSlashEvent {
 				InteractionFollowupMessageBuilder followup = event.createFollowupMessageBuilder().setFlags(InteractionCallbackDataFlag.EPHEMERAL);
 				followup.setContent("Currently planned tasks:").send();
 				
-				for(String id:planned) {
+				for(String id:planned.stream().sorted().toList()) {
 					String eid = "e:"+id;
 					String mention = j.get(eid+":mention");
 					Long date = Long.valueOf(j.get(eid+":date"))/1000;
