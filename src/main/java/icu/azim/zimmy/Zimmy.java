@@ -309,6 +309,7 @@ public class Zimmy {
 		
 		
 		VelenCommand.ofSlash("schedule", "Schedule a message", velen, new Schedule())
+			.addMiddlewares("server check", "configuration check", "permission check")
 			.addOptions(
 					SlashCommandOption.createWithOptions(
 							SlashCommandOptionType.SUB_COMMAND, "channel", "You are scheduling message to the channel in this server",
@@ -322,7 +323,6 @@ public class Zimmy {
 									SlashCommandOption.create(SlashCommandOptionType.STRING, "webhook_url", "The webhook to send message to", true),
 									SlashCommandOption.create(SlashCommandOptionType.STRING, "discohook_url", "Discohook message url", true),
 									SlashCommandOption.create(SlashCommandOptionType.STRING, "datetime", "When to send message (`dd.MM.yyyy HH:mm` or `HH:mm`)", true))))
-			.addMiddlewares("server check", "configuration check", "permission check")
 			.attach();
 		api.addMessageComponentCreateListener(new ScheduleButtons());
 		
@@ -333,7 +333,9 @@ public class Zimmy {
 		api.addMessageComponentCreateListener(new PlannedButtons());
 		api.addMessageComponentCreateListener(new DeleteButtons());
 		
+		
 		VelenCommand.ofSlash("edit", "Edit planned message", velen, new Edit())
+			.addMiddlewares("server check", "configuration check", "permission check")
 			.addOptions(
 					SlashCommandOption.create(SlashCommandOptionType.LONG, "id", "id of the message you want to edit", true),
 					SlashCommandOption.createWithChoices(SlashCommandOptionType.STRING, "property", "Which property of planned message do you want to edit?", true, Arrays.asList(
@@ -341,11 +343,12 @@ public class Zimmy {
 							SlashCommandOptionChoice.create("discohook_url", "discohook_url"),
 							SlashCommandOptionChoice.create("datetime", "datetime"))),
 					SlashCommandOption.create(SlashCommandOptionType.STRING, "new_value", "New value of the property", true))
-			.addMiddlewares("server check", "configuration check", "permission check")
 			.attach();
 		api.addMessageComponentCreateListener(new EditConfirmButton());
 		
+		
 		VelenCommand.ofSlash("configure", "Configure bot for this server", velen, new Configure())
+			.addMiddlewares("server check", "admin check")
 			.addOptions(
 					SlashCommandOption.create(SlashCommandOptionType.SUB_COMMAND, "auto", "Automatically generates needed channel and role."),
 					SlashCommandOption.create(SlashCommandOptionType.SUB_COMMAND, "get", "Get current bot settings"),
@@ -356,13 +359,15 @@ public class Zimmy {
 									SlashCommandOptionChoice.create("timzeone", "timezone"))),
 							SlashCommandOption.create(SlashCommandOptionType.STRING, "new_value", "New value of the property", true)))
 					)
-			.addMiddlewares("server check", "admin check")
 			.attach();
 
+		
 		VelenCommand.ofSlash("help", "Show something helpful maybe", velen, new Help())
 			.attach();
 		
+		
 		VelenCommand.ofSlash("template", "manage templates", velen, new Template())
+			.addMiddlewares("server check", "configuration check", "permission check")
 			.addOptions(
 					SlashCommandOption.createWithOptions(SlashCommandOptionType.SUB_COMMAND, "create", "Create new template", Arrays.asList(
 							SlashCommandOption.create(SlashCommandOptionType.STRING, "name", "Name of template", true),
@@ -384,10 +389,11 @@ public class Zimmy {
 							SlashCommandOption.create(SlashCommandOptionType.STRING, "name", "Name of the template to delete", true)
 							))
 					)
-			.addMiddlewares("server check", "configuration check", "permission check")
 			.attach();
 		
+		
 		VelenCommand.ofSlash("repeat", "Make message be sent repeatedly after it's planned date on given schedule", velen, new Repeat())
+			.addMiddlewares("server check", "configuration check", "permission check")
 			.addOptions(
 					SlashCommandOption.create(SlashCommandOptionType.LONG, "id", "id of the message you want to repeat", true),
 					SlashCommandOption.createWithChoices(SlashCommandOptionType.STRING, "type", "Type of the repeat schedule to use", true, Arrays.asList(
@@ -395,7 +401,6 @@ public class Zimmy {
 							SlashCommandOptionChoice.create("minutes", "minutes"))),
 					SlashCommandOption.create(SlashCommandOptionType.STRING, "expression", "Expression of repeat schedule", true)
 					)
-			.addMiddlewares("server check", "configuration check", "permission check")
 			.attach();
 	}
 	
