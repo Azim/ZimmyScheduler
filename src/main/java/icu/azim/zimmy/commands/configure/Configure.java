@@ -16,6 +16,7 @@ import org.javacord.api.interaction.callback.InteractionImmediateResponseBuilder
 
 import icu.azim.zimmy.Zimmy;
 import icu.azim.zimmy.util.ServerConfig;
+import icu.azim.zimmy.util.ServerConfig.NotificationType;
 import pw.mihou.velen.interfaces.VelenArguments;
 import pw.mihou.velen.interfaces.VelenSlashEvent;
 import pw.mihou.velen.utils.VelenUtils;
@@ -81,7 +82,8 @@ public class Configure implements VelenSlashEvent {
 			responder.addEmbed(new EmbedBuilder().setDescription(
 							"Control role: "+cfg.getRoleOrDefault(event.getApi())+"\n"+
 							"Control channel: "+cfg.getChannelOrDefault(event.getApi())+"\n"+
-							"Timezone: `"+cfg.getTimezoneOrDefault()+"`"
+							"Timezone: `"+cfg.getTimezoneOrDefault()+"`\n"+
+							"Notifications: `"+cfg.notifications.toString().toLowerCase()+"`"
 							)).respond();
 			break;
 		case "set":
@@ -131,6 +133,21 @@ public class Configure implements VelenSlashEvent {
 				cfg.setTimezone(zone.getID(), jpool);
 				responder.setContent("New timezone is `"+zone.getDisplayName(Locale.ENGLISH)+"`").respond();
 				break;
+			case "notifications":
+				try {
+					ServerConfig.NotificationType ntype = ServerConfig.NotificationType.valueOf(nvalue.toUpperCase());
+					cfg.setNotifications(ntype, jpool);
+					responder.setContent("New notifications setting is `"+ntype.toString().toLowerCase()+"`").respond();
+				} catch (IllegalArgumentException e) {
+					String expected = "Invalid notifications type.\nExpected `";
+					NotificationType[] values = ServerConfig.NotificationType.values();
+					for(int i = 0; i < values.length-2; i++) {
+						expected += values[i].toString().toLowerCase()+"`, `";
+					}
+					expected += values[values.length-2].toString().toLowerCase()+"` or `"+values[values.length-1].toString().toLowerCase()+"`.";
+					responder.setContent(expected).respond();
+					return;
+				}
 			}
 			break;
 		}

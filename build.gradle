@@ -9,7 +9,7 @@ tasks.withType(JavaCompile) {
 repositories {
     jcenter()
     mavenCentral()
-    maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
+    //maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
     
     maven { url 'https://jitpack.io' }
 }
@@ -23,14 +23,12 @@ dependencies {
 	implementation 'com.google.code.gson:gson:2.8.6'
 	implementation 'com.fasterxml.jackson.core:jackson-databind:2.9.3'
 	
-	//implementation 'org.javacord:javacord:3.3.2'
-	//implementation 'org.javacord:javacord-core:3.3.2'
-	
-	implementation 'org.javacord:javacord:3.4.0-SNAPSHOT'
-	implementation 'org.javacord:javacord-core:3.4.0-SNAPSHOT'
+	implementation 'org.javacord:javacord:3.4.0'
+	implementation 'org.javacord:javacord-core:3.4.0'
 	
 	//implementation 'pw.mihou:Velen:e4b2e168e3'
-	implementation 'pw.mihou:Velen:c97d4492ce'
+	//implementation 'pw.mihou:Velen:c97d4492ce'
+	implementation 'pw.mihou:Velen:3.1.1'
 	//implementation 'com.github.Joshix-1:Javacord:Jemand-SNAPSHOT'
 	//implementation 'com.github.Joshix-1:Javacord:e5b6a2e'
 	
@@ -41,6 +39,9 @@ dependencies {
 	
 	implementation 'org.quartz-scheduler:quartz:2.3.2'
 	implementation 'mysql:mysql-connector-java:8.0.27'
+	
+	//implementation 'ch.qos.logback:logback-classic:1.2.10'
+
 	
 	//stats
 	implementation 'com.squareup.okhttp3:okhttp:4.9.2'

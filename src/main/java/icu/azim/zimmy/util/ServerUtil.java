@@ -90,7 +90,7 @@ public class ServerUtil {
 			String role = j.get("s:" + serverId + ":role");
 			if(role==null)return false;
 
-			String channel = j.get("s:" + serverId + ":role");
+			String channel = j.get("s:" + serverId + ":channel");
 			if(channel==null)return false;
 			return true;
 		}
@@ -101,6 +101,7 @@ public class ServerUtil {
 	 * [s:ID:channel]		- long
 	 * [s:ID:timezone]		- string
 	 * [s:ID:planned] 		- List<long>
+	 * [s:ID:notifications]	- string (enum)
 	 * 
 	 * [e:lastId] 			- long
 	 * 

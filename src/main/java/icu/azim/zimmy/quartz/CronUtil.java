@@ -150,15 +150,30 @@ public class CronUtil {
 		Zimmy.getInstance().scheduler.unscheduleJob(t);
 	}
 	
-	public static void editTime(Date date, String id) throws SchedulerException {
+	public static void registerByType(Date date, String id, Jedis j) throws SchedulerException {
+		String type = j.get("e:"+id+":r:type");
+		registerOnce(date, id);
+		if(type!=null) {
+			String server = j.get("e:"+id+":server");
+			String pattern = j.get("e:"+id+":r:pattern");
+			if(type.equalsIgnoreCase("cron")) {
+				makeRepeatCron(server, id, pattern);
+			}else {
+				makeRepeatMinutes(server, id, Integer.valueOf(pattern));
+			}
+		}
+	}
+	
+	public static void editTime(String id, Date date, Jedis j) throws SchedulerException {
 		Scheduler scheduler = Zimmy.getInstance().scheduler;
 		TriggerKey key = getTrigger(id);
 		if(key==null) {
-			registerOnce(date, id);
+			registerByType(date, id, j);
 		}else {
-			Trigger t = scheduler.getTrigger(key);
-			t = t.getTriggerBuilder().startAt(date).build();
-			scheduler.rescheduleJob(t.getKey(), t);
+			scheduler.rescheduleJob(key, 
+					scheduler.getTrigger(key)
+					.getTriggerBuilder().startAt(date)
+					.build());
 		}
 	}
 }

@@ -173,7 +173,7 @@ public class Edit implements VelenSlashEvent {
 				}else {
 					try {
 						try(Jedis j = jpool.getResource()){
-							CronUtil.editTime(date, id+"");
+							CronUtil.editTime(id+"", date, j);
 							ServerUtil.editTaskDate(id+"", date, j);
 						}
 						updater.setContent("Message `#"+id+"` updated.").update();

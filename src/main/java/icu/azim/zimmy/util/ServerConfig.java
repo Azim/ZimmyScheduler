@@ -10,10 +10,16 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
 public class ServerConfig{
+	public enum NotificationType{
+		ALL, NONE, NON_REPEATING, EXTERNAL
+	}
+	
 	public Long role;
 	public Long channel;
 	public String timezone;
 	public Long serverId;
+	public NotificationType notifications = NotificationType.ALL;
+
 	
 	public ServerConfig(Long serverId, JedisPool jpool) {
 		this.serverId = serverId;
@@ -28,6 +34,13 @@ public class ServerConfig{
 				this.channel = Long.valueOf(channel);
 			}
 			timezone = j.get(sid+":timezone");
+			
+			String notifications = j.get(sid+":notifications");
+			if(notifications == null) {
+				this.notifications = NotificationType.ALL;//default for older servers
+			}else {
+				this.notifications = NotificationType.valueOf(notifications);
+			}
 		}
 	}
 
@@ -47,6 +60,12 @@ public class ServerConfig{
 		this.timezone = timezone;
 		try (Jedis j = jpool.getResource()){
 			j.set("s:"+serverId+":timezone", timezone);
+		}
+	}
+	public void setNotifications(NotificationType ntype, JedisPool jpool) {
+		this.notifications = ntype;
+		try(Jedis j = jpool.getResource()){
+			j.set("s:"+serverId+":notifications", ntype.toString());
 		}
 	}
 	

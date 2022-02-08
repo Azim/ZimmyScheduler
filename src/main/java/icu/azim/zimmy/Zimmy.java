@@ -89,11 +89,12 @@ public class Zimmy {
 	}
 	
 	/**TODO Data structure
-	 * [s:ID:prefix]		- string
+	 * [s:ID:prefix]		- string [deprecated]
 	 * [s:ID:role]			- long
 	 * [s:ID:channel]		- long
 	 * [s:ID:timezone]		- string
 	 * [s:ID:planned] 		- List<long>
+	 * [s:ID:notifications]	- string (enum)
 	 * 
 	 * [e:lastId] 			- long
 	 * 
@@ -162,7 +163,7 @@ public class Zimmy {
 		System.out.println("Logged in bot");
 		System.out.println("You can invite bot using this url: "+new VelenBotInviteBuilder(api.getClientId())
 				.addScopes(InviteScope.APPLICATIONS_COMMANDS, InviteScope.BOT)
-				.setPermissions(PermissionType.MANAGE_ROLES, PermissionType.MANAGE_CHANNELS, PermissionType.MANAGE_WEBHOOKS, PermissionType.READ_MESSAGES, PermissionType.SEND_MESSAGES, PermissionType.EMBED_LINKS, PermissionType.ATTACH_FILE, PermissionType.READ_MESSAGE_HISTORY, PermissionType.USE_EXTERNAL_EMOJIS, PermissionType.ADD_REACTIONS, PermissionType.USE_SLASH_COMMANDS)
+				.setPermissions(PermissionType.MANAGE_ROLES, PermissionType.MANAGE_CHANNELS, PermissionType.MANAGE_WEBHOOKS, PermissionType.READ_MESSAGES, PermissionType.SEND_MESSAGES, PermissionType.EMBED_LINKS, PermissionType.ATTACH_FILE, PermissionType.READ_MESSAGE_HISTORY, PermissionType.USE_EXTERNAL_EMOJIS, PermissionType.ADD_REACTIONS, PermissionType.USE_APPLICATION_COMMANDS)
 				.create()
 				);
 		
@@ -204,9 +205,11 @@ public class Zimmy {
 					r.addUser(api.getYourself());
 				});
 			}
+			//TODO start all planned messsages if there are any
 		});
 		api.addServerLeaveListener(event->{
 			mainChannel.sendMessage("Left server `"+event.getServer().getName()+"` ("+event.getServer().getMemberCount()+" members)");
+			//TODO stop all planned messages from being sent?
 		});
 		api.updateActivity(ActivityType.WATCHING, "booting up.");
 
@@ -353,10 +356,11 @@ public class Zimmy {
 					SlashCommandOption.create(SlashCommandOptionType.SUB_COMMAND, "auto", "Automatically generates needed channel and role."),
 					SlashCommandOption.create(SlashCommandOptionType.SUB_COMMAND, "get", "Get current bot settings"),
 					SlashCommandOption.createWithOptions(SlashCommandOptionType.SUB_COMMAND, "set", "Change bot settings", Arrays.asList(
-							SlashCommandOption.createWithChoices(SlashCommandOptionType.STRING, "property", "Which bot setting you want to change?", true, Arrays.asList(
+							SlashCommandOption.createWithChoices(SlashCommandOptionType.STRING, "property", "Which bot setting do you want to change?", true, Arrays.asList(
 									SlashCommandOptionChoice.create("role", "role"),
 									SlashCommandOptionChoice.create("channel", "channel"),
-									SlashCommandOptionChoice.create("timzeone", "timezone"))),
+									SlashCommandOptionChoice.create("timzeone", "timezone"),
+									SlashCommandOptionChoice.create("notifications", "notifications"))),
 							SlashCommandOption.create(SlashCommandOptionType.STRING, "new_value", "New value of the property", true)))
 					)
 			.attach();
@@ -452,7 +456,7 @@ public class Zimmy {
 			velen.removeCommand(cmd);
 		});
 		List<SlashCommandOption> subcommands = j.keys("t:"+server.getIdAsString()+":*:data").stream().map(key->{
-			System.out.println("Command "+key.split(":")[2]+" : "+server.getId()+ ":"+server.getIdAsString());
+			//System.out.println("Command "+key.split(":")[2]+" : "+server.getId()+ ":"+server.getIdAsString());
 			return TemplatePayload.fromJedis(key.split(":")[2], server.getIdAsString(),j);
 		}).filter(t->t!=null).map(template->createTemplateSubcommand(template)).toList();
 		
