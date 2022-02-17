@@ -1,11 +1,15 @@
 plugins {
     id 'java'
-    id 'application'
+	id 'org.springframework.boot' version '2.6.3'
+	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+	id 'com.vaadin' version '0.14.6.0'
     id 'eclipse'
 }
+
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
 }
+
 repositories {
     jcenter()
     mavenCentral()
@@ -14,46 +18,46 @@ repositories {
     maven { url 'https://jitpack.io' }
 }
 
-sourceCompatibility = 16 	//TODO
-targetCompatibility = 16	//TODO
+group = 'icu.azim'
+version = '0.0.1'
+sourceCompatibility = 16
+targetCompatibility = 16
 compileJava.options.encoding = 'UTF-8'
+
+ext {
+	set('vaadinVersion', "14.8.4")
+}
 
 dependencies {
     implementation 'com.google.guava:guava:28.0-jre'
 	implementation 'com.google.code.gson:gson:2.8.6'
-	implementation 'com.fasterxml.jackson.core:jackson-databind:2.9.3'
 	
 	implementation 'org.javacord:javacord:3.4.0'
 	implementation 'org.javacord:javacord-core:3.4.0'
-	
-	//implementation 'pw.mihou:Velen:e4b2e168e3'
-	//implementation 'pw.mihou:Velen:c97d4492ce'
 	implementation 'pw.mihou:Velen:3.1.1'
-	//implementation 'com.github.Joshix-1:Javacord:Jemand-SNAPSHOT'
-	//implementation 'com.github.Joshix-1:Javacord:e5b6a2e'
-	
-	implementation 'redis.clients:jedis:3.7.0'
 	
 	//cron to human readable
 	implementation "it.burning:cron-expression-descriptor:1.2.2"
 	
+	implementation 'redis.clients:jedis:3.7.0'
 	implementation 'org.quartz-scheduler:quartz:2.3.2'
+	implementation 'com.mchange:c3p0:0.9.5.5'
 	implementation 'mysql:mysql-connector-java:8.0.27'
-	
-	//implementation 'ch.qos.logback:logback-classic:1.2.10'
-
-	
 	//stats
 	implementation 'com.squareup.okhttp3:okhttp:4.9.2'
-	
-	//implementation 'ch.qos.logback:logback-classic:1.2.7'
-	implementation 'org.apache.logging.log4j:log4j-api:2.11.0' //for reimpl
-    testImplementation 'junit:junit:4.12'
     
+    //spring
+    //implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+	implementation 'com.vaadin:vaadin-spring-boot-starter'
+	implementation 'com.fasterxml.jackson.core:jackson-core:2.13.1'
+	implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.1'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
-application {
-    // Define the main class for the application
-    mainClassName = 'icu.azim.fr.autobot.EntryPoint'
+
+dependencyManagement {
+	imports {
+		mavenBom "com.vaadin:vaadin-bom:${vaadinVersion}"
+	}
 }
 
 test {

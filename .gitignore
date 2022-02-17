@@ -12,3 +12,8 @@ config.json
 build
 bin
 logs
+node_modules
+target
+frontend
+webpack.generated.js
+package-lock.json
