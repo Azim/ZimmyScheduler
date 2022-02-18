@@ -1,6 +1,5 @@
 package icu.azim.zimmy;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Arrays;
@@ -113,26 +112,12 @@ public class Zimmy {
 	
 	
 	
-	public Zimmy() {
+	public Zimmy(BotConfig cfg) {
 		instance = this;
 		
-		BotConfig cfg;
-		
 		isDebug = System.getenv().containsKey("testing");
+		
 		System.out.println(isDebug?"isDebug":"isntDebug");
-		if(isDebug) { 
-			cfg = BotConfig.fromEnv();
-		}else {
-			try {
-				cfg = BotConfig.fromJson("config.json");
-			} catch (FileNotFoundException e) {
-				System.out.println("Error loading config file");
-				e.printStackTrace();
-				System.exit(10);
-				return;
-			}
-		}
-		System.out.println("Got config");
 		
 		if(cfg.token==null||cfg.channelId==null||cfg.token.isEmpty()||cfg.channelId.isEmpty()) {
 			System.out.println("Either token or main channel env variables are missing, shutting down");
@@ -216,6 +201,8 @@ public class Zimmy {
 		setupStats(api, cfg.topggToken);
 		
 		mainChannel.sendMessage("Bot sucessfully started");
+		if(isDebug) return;
+		
 		try(Jedis j = getPool().getResource()){
 			String message = "";
 			for(Server server:api.getServers()) {

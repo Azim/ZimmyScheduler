@@ -18,6 +18,8 @@ public class BotConfig {
 	
 	public String weatherToken, topggToken, dellyToken;
 	
+	public String clientId, clientSecret;
+	
 	public static BotConfig fromEnv() {
 		BotConfig cfg = new BotConfig();
 		cfg.token = System.getenv("token");

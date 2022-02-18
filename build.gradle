@@ -2,7 +2,7 @@ plugins {
     id 'java'
 	id 'org.springframework.boot' version '2.6.3'
 	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
-	id 'com.vaadin' version '0.14.6.0'
+	id 'com.vaadin' version '22.0.5'
     id 'eclipse'
 }
 
@@ -25,7 +25,7 @@ targetCompatibility = 16
 compileJava.options.encoding = 'UTF-8'
 
 ext {
-	set('vaadinVersion', "14.8.4")
+	set('vaadinVersion', "22.0.5")
 }
 
 dependencies {
@@ -47,8 +47,9 @@ dependencies {
 	implementation 'com.squareup.okhttp3:okhttp:4.9.2'
     
     //spring
-    //implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 	implementation 'com.vaadin:vaadin-spring-boot-starter'
+	
 	implementation 'com.fasterxml.jackson.core:jackson-core:2.13.1'
 	implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.1'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'

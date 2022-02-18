@@ -1,7 +1,6 @@
 package icu.azim.zimmy.util;
 
 import java.io.IOException;
-
 import com.google.gson.JsonObject;
 
 import okhttp3.MediaType;
@@ -40,4 +39,5 @@ public class Statistics {
 		json.addProperty("guildCount", count);
 		sendPost(api, apiToken, json.toString());
 	}
+	
 }
