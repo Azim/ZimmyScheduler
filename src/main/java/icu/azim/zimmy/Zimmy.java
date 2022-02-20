@@ -359,7 +359,7 @@ public class Zimmy {
 							SlashCommandOption.createWithChoices(SlashCommandOptionType.STRING, "property", "Which bot setting do you want to change?", true, Arrays.asList(
 									SlashCommandOptionChoice.create("role", "role"),
 									SlashCommandOptionChoice.create("channel", "channel"),
-									SlashCommandOptionChoice.create("timzeone", "timezone"),
+									SlashCommandOptionChoice.create("timezone", "timezone"),
 									SlashCommandOptionChoice.create("notifications", "notifications"))),
 							SlashCommandOption.create(SlashCommandOptionType.STRING, "new_value", "New value of the property", true)))
 					)
