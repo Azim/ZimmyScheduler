@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Optional;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 import okhttp3.OkHttpClient;
@@ -30,4 +31,23 @@ public class DUtil {
 
 		return Optional.empty();
 	}
+
+	public static Optional<JsonArray> getUserGuildsByToken(String token) {
+		Request request = new Request.Builder()
+				.addHeader("Authorization", "Bearer "+token)
+				.url("https://discordapp.com/api/users/@me/guilds")
+				.build();
+		try {
+			Response response = client.newCall(request).execute();
+			if (response.isSuccessful()) {
+				Gson gson = new Gson();
+				JsonArray res = gson.fromJson(response.body().string(), JsonArray.class);
+				response.close();
+				return Optional.of(res);
+			}
+		} catch (IOException ignored) { }
+
+		return Optional.empty();
+	}
+	
 }

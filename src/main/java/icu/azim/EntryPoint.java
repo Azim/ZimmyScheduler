@@ -5,10 +5,11 @@ import java.util.Properties;
 
 import org.springframework.boot.SpringApplication;
 
-import icu.azim.dashboard.Dashboard;
+import icu.azim.dashboard.DashboardApplication;
 import icu.azim.zimmy.BotConfig;
 import icu.azim.zimmy.Zimmy;
 
+@SuppressWarnings("unused")
 public class EntryPoint {
 	public static void main(String[] args) {
 		System.setProperty("log4j2.formatMsgNoLookups", "true");
@@ -23,8 +24,8 @@ public class EntryPoint {
 			return;
 		}
 		
-		//new Zimmy(cfg);
-		SpringApplication application = new SpringApplication(Dashboard.class);
+		new Zimmy(cfg);
+		SpringApplication application = new SpringApplication(DashboardApplication.class);
 		
         Properties properties = new Properties();
         properties.put("spring.security.oauth2.client.registration.discord.client-id", cfg.clientId);

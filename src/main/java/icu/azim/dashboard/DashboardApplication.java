@@ -5,13 +5,13 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 
 @SpringBootApplication
-public class Dashboard extends SpringBootServletInitializer {
+public class DashboardApplication extends SpringBootServletInitializer {
 	@Override
 	protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
-		return application.sources(Dashboard.class);
+		return application.sources(DashboardApplication.class);
 	}
     
-	public Dashboard() {
+	public DashboardApplication() {
 		System.out.println("loaded dashboard class");
 	}
 }

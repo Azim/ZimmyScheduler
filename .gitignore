@@ -17,3 +17,6 @@ target
 frontend
 webpack.generated.js
 package-lock.json
+pnpmfile.js
+.npmrc
+pnpm-lock.yaml
