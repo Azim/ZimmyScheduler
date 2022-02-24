@@ -9,7 +9,6 @@ import java.util.Set;
 
 import org.javacord.api.entity.server.Server;
 import org.javacord.api.entity.user.User;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
@@ -19,7 +18,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.accordion.Accordion;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.button.Button;
@@ -27,10 +25,9 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.details.Details;
 import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.icon.Icon;
-import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -66,10 +63,12 @@ public class DashboardView extends AppLayout{
 			currentUser = Optional.empty();
 			currentUserGuilds = Optional.empty();
 		}
-		
 		addToNavbar(buildNavbar());
-		setContent(buildAbout());
+		setContent(buildAbout()); //TODO some static components?
+		
 	}
+	
+	
 	
 	private boolean isAuthorized() {
 		return (SecurityContextHolder.getContext().getAuthentication() instanceof OAuth2AuthenticationToken);
@@ -77,10 +76,14 @@ public class DashboardView extends AppLayout{
 	
 	private Tabs getTabs() {
 		Tab about = new Tab("About");
+		Tab schedule = new Tab("Schedule");
+		schedule.setEnabled(false);//TODO
 		Tab planned = new Tab("Planned posts");
 		planned.setEnabled(isAuthorized());
+		Tab templates = new Tab("Templates");
+		templates.setEnabled(false);//TODO 
 		
-		Tabs tabs = new Tabs(true, about, planned);
+		Tabs tabs = new Tabs(true, about, schedule, templates, planned);
 		tabs.setWidthFull();
 		tabs.addSelectedChangeListener(event->{
 			//TODO tab changed, set different content
@@ -88,8 +91,14 @@ public class DashboardView extends AppLayout{
 			case "About":
 				setContent(buildAbout());
 				break;
+			case "Schedule":
+				//TODO
+				break;
 			case "Planned posts":
 				setContent(buildPlanned());
+				break;
+			case "Templates":
+				//TODO
 				break;
 			default:
 				
@@ -100,13 +109,38 @@ public class DashboardView extends AppLayout{
 	}
 	
 	private Component buildAbout() {
-		HorizontalLayout root = new HorizontalLayout();
-		root.setAlignItems(Alignment.CENTER);
-		Button btn = new Button("the button");
-		btn.addClickListener(e->{
-			System.out.println("pressed");
-		});
-		root.add(btn);
+		VerticalLayout root = new VerticalLayout();
+		root.setAlignItems(Alignment.START);
+		root.add(
+			new H3("Zimmy the discord message scheduler"),
+			new Span("A simple bot to plan/schedule webhook messages, including repeating ones (via cron or set time period)"),
+			new Span("Now with dashboard! Same functionality, but in more convenient format! Probably!"),
+			new HorizontalLayout(
+					new Anchor(
+							"https://discord.com/oauth2/authorize?client_id=721752791512776806&permissions=805424208&scope=bot%20applications.commands&prompt=consent", 
+							new Button("Invite link")),
+					new Anchor(
+							"https://gist.github.com/Azim/4bbccc2ca0206cf2c840740253f65c14", 
+							new Button("Privacy policy")),
+					new Anchor(
+							"https://github.com/Azim/ZimmyScheduler", 
+							new Button("Github repository")),
+					new Anchor(
+							"https://discord.gg/nBjSGa4", 
+							new Button("our Discord server")),
+					new Anchor(
+							"https://en.liberapay.com/Azim0ff/", 
+							new Button("Donation page"))
+					),
+			new HorizontalLayout(
+					new Anchor(
+							"https://discohook.app/", 
+							new Button("Discohook")),
+					new Anchor(
+							"https://www.freeformatter.com/cron-expression-generator-quartz.html#cronexpressionexamples", 
+							new Button("Cron tutorial"))
+					)
+		);
 		
 		return root;
 	}
@@ -117,8 +151,7 @@ public class DashboardView extends AppLayout{
 		
 		if(!isAuthorized()||currentUser.isEmpty()||currentUserGuilds.isEmpty()) return root;
 		String userId = currentUser.get().get("id").getAsString();
-		System.out.println(currentUserGuilds.get().toString());
-		
+		//TODO loading bar and async building of this all instead of join
 		User user = Zimmy.getInstance().api.getUserById(userId).join();
 		Collection<Server> botServers = Zimmy.getInstance().api.getServers();
 		Set<Server> mutualServers = new HashSet<>();
@@ -205,7 +238,6 @@ public class DashboardView extends AppLayout{
 		Avatar avatar = new Avatar();
 		if(!isAuthorized()||currentUser.isEmpty()) return avatar;
 		JsonObject user = currentUser.get();
-		System.out.println(user.toString());
 		avatar.setName(user.get("username").getAsString()+":"+user.get("discriminator").getAsString());
 		avatar.setImage(String.format("https://cdn.discordapp.com/avatars/%s/%s.png", user.get("id").getAsString(), user.get("avatar").getAsString()));
 		

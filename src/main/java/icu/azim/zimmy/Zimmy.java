@@ -200,7 +200,7 @@ public class Zimmy {
 
 		setupStats(api, cfg.topggToken);
 		
-		mainChannel.sendMessage("Bot sucessfully started");
+		mainChannel.sendMessage("Bot succesfully started");
 		if(isDebug) return;
 		
 		try(Jedis j = getPool().getResource()){
