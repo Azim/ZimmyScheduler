@@ -24,7 +24,7 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.details.Details;
 import com.vaadin.flow.component.html.Anchor;
-import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.AnchorTarget;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.html.Span;
@@ -47,7 +47,7 @@ import redis.clients.jedis.Jedis;
 @AnonymousAllowed
 public class DashboardView extends AppLayout{
     private final OAuth2AuthorizedClientService clientService;
-    private Optional<JsonObject> currentUser;
+    private Optional<JsonObject> currentUser; //TODO wrapper object with no optional
     private Optional<JsonArray> currentUserGuilds;
     
 	public DashboardView(OAuth2AuthorizedClientService clientService) {
@@ -116,33 +116,25 @@ public class DashboardView extends AppLayout{
 			new Span("A simple bot to plan/schedule webhook messages, including repeating ones (via cron or set time period)"),
 			new Span("Now with dashboard! Same functionality, but in more convenient format! Probably!"),
 			new HorizontalLayout(
-					new Anchor(
-							"https://discord.com/oauth2/authorize?client_id=721752791512776806&permissions=805424208&scope=bot%20applications.commands&prompt=consent", 
-							new Button("Invite link")),
-					new Anchor(
-							"https://gist.github.com/Azim/4bbccc2ca0206cf2c840740253f65c14", 
-							new Button("Privacy policy")),
-					new Anchor(
-							"https://github.com/Azim/ZimmyScheduler", 
-							new Button("Github repository")),
-					new Anchor(
-							"https://discord.gg/nBjSGa4", 
-							new Button("our Discord server")),
-					new Anchor(
-							"https://en.liberapay.com/Azim0ff/", 
-							new Button("Donation page"))
-					),
+					a("Invite link", "https://discord.com/oauth2/authorize?client_id=721752791512776806&permissions=805424208&scope=bot%20applications.commands&prompt=consent"),
+					a("Privacy policy", "https://gist.github.com/Azim/4bbccc2ca0206cf2c840740253f65c14"),
+					a("Github repository", "https://github.com/Azim/ZimmyScheduler"),
+					a("our Discord server", "https://discord.gg/nBjSGa4"),
+					a("Donation page", "https://en.liberapay.com/Azim0ff/")
+				),
 			new HorizontalLayout(
-					new Anchor(
-							"https://discohook.app/", 
-							new Button("Discohook")),
-					new Anchor(
-							"https://www.freeformatter.com/cron-expression-generator-quartz.html#cronexpressionexamples", 
-							new Button("Cron tutorial"))
-					)
+					a("Discohook", "https://discohook.app/"),
+					a("Cron tutorial", "https://www.freeformatter.com/cron-expression-generator-quartz.html#cronexpressionexamples")
+				)
 		);
 		
 		return root;
+	}
+	
+	private Component a(String text, String url) {
+		Anchor anchor = new Anchor(url, new Button(text));
+		anchor.setTarget(AnchorTarget.BLANK);
+		return anchor;
 	}
 	
 	private Component buildPlanned() {
