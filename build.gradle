@@ -60,9 +60,6 @@ dependencyManagement {
 		mavenBom "com.vaadin:vaadin-bom:${vaadinVersion}"
 	}
 }
-vaadin {
-   productionMode = true
-}
 
 test {
     systemProperty "file.encoding", "utf-8"

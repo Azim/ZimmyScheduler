@@ -33,9 +33,11 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
+import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 
+import icu.azim.dashboard.components.TestComponent;
 import icu.azim.dashboard.util.DUtil;
 import icu.azim.zimmy.Zimmy;
 import icu.azim.zimmy.quartz.CronUtil;
@@ -44,6 +46,7 @@ import redis.clients.jedis.Jedis;
 
 @SuppressWarnings("serial")
 @Route("")
+@PageTitle("Zimmy dashboard")
 @AnonymousAllowed
 public class DashboardView extends AppLayout{
     private final OAuth2AuthorizedClientService clientService;
@@ -65,11 +68,8 @@ public class DashboardView extends AppLayout{
 		}
 		addToNavbar(buildNavbar());
 		setContent(buildAbout()); //TODO some static components?
-		
 	}
-	
-	
-	
+
 	private boolean isAuthorized() {
 		return (SecurityContextHolder.getContext().getAuthentication() instanceof OAuth2AuthenticationToken);
 	}
@@ -127,6 +127,7 @@ public class DashboardView extends AppLayout{
 					a("Cron tutorial", "https://www.freeformatter.com/cron-expression-generator-quartz.html#cronexpressionexamples")
 				)
 		);
+		root.add(new TestComponent());
 		
 		return root;
 	}
