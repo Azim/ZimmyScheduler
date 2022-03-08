@@ -37,7 +37,7 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 
-import icu.azim.dashboard.components.TestComponent;
+import icu.azim.dashboard.components.EmbedEditor;
 import icu.azim.dashboard.util.DUtil;
 import icu.azim.zimmy.Zimmy;
 import icu.azim.zimmy.quartz.CronUtil;
@@ -77,7 +77,7 @@ public class DashboardView extends AppLayout{
 	private Tabs getTabs() {
 		Tab about = new Tab("About");
 		Tab schedule = new Tab("Schedule");
-		schedule.setEnabled(false);//TODO
+		schedule.setEnabled(true);//TODO
 		Tab planned = new Tab("Planned posts");
 		planned.setEnabled(isAuthorized());
 		Tab templates = new Tab("Templates");
@@ -92,7 +92,7 @@ public class DashboardView extends AppLayout{
 				setContent(buildAbout());
 				break;
 			case "Schedule":
-				//TODO
+				setContent(buildCompose());
 				break;
 			case "Planned posts":
 				setContent(buildPlanned());
@@ -127,7 +127,6 @@ public class DashboardView extends AppLayout{
 					a("Cron tutorial", "https://www.freeformatter.com/cron-expression-generator-quartz.html#cronexpressionexamples")
 				)
 		);
-		root.add(new TestComponent());
 		
 		return root;
 	}
@@ -136,6 +135,16 @@ public class DashboardView extends AppLayout{
 		Anchor anchor = new Anchor(url, new Button(text));
 		anchor.setTarget(AnchorTarget.BLANK);
 		return anchor;
+	}
+	
+	private Component buildCompose() {
+		VerticalLayout root = new VerticalLayout();
+		root.setAlignItems(Alignment.START);
+		EmbedEditor editor = new EmbedEditor(json->{
+			System.out.println("Embed editor submitted "+json);
+		});
+		root.add(editor);
+		return root;
 	}
 	
 	private Component buildPlanned() {

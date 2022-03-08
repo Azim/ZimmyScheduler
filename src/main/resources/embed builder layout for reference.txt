@@ -1,0 +1,75 @@
+content
+> profile
+  username
+  avatar
+> embed 1 | [duplicate] | [remove]
+  > author
+    name
+	url
+	icon url
+  > body
+    title
+	descripton
+	title url
+	side color | [color picker]
+  > fields
+    field name | inline
+	field value
+	[add field]
+  > images
+    image url 1 (max 4 if title url is set, max 1 otherwise)
+	image url ..
+	image url 4
+	thumnail url
+  > footer
+    footer text
+	timestamp
+	footer icon url
+[add embed]
+
+{
+  "content": "content text",
+  "username": "username text",
+  "avatar_url": "http://avatar.url",
+  "embeds": [
+    {
+      "title": "embed 1 body title",
+      "description": "embed 1 body description",
+      "url": "http://embed 1 url",
+      "color": 197379,
+      "fields": [
+        {
+          "name": "field 1 name",
+          "value": "field 1 value"
+        },
+        {
+          "name": "field 2 name",
+          "value": "field 2 value",
+          "inline": true
+        }
+      ],
+      "author": {
+        "name": "embed 1 author name",
+        "url": "http://ember 1 author url",
+        "icon_url": "http://ember 1 author icon url"
+      },
+      "footer": {
+        "text": "footer text",
+        "icon_url": "http://footer icon url"
+      },
+      "timestamp": "2022-03-01T21:00:00.000Z",
+      "image": {
+        "url": "http://image url 1"
+      },
+      "thumbnail": {
+        "url": "http://thumbnail url"
+      }
+    },
+    {
+      "url": "http://embed 1 url",
+      "image": {
+        "url": "http://image url 2"
+      }
+    }
+  ]
+}
