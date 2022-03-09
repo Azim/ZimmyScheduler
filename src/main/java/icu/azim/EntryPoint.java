@@ -24,7 +24,7 @@ public class EntryPoint {
 			return;
 		}
 		
-		new Zimmy(cfg);
+		//new Zimmy(cfg);
 		SpringApplication application = new SpringApplication(DashboardApplication.class);
 		
         Properties properties = new Properties();
