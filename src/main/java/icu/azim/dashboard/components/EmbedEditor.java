@@ -9,7 +9,7 @@ import com.vaadin.flow.component.dependency.JsModule;
 
 @SuppressWarnings("serial")
 @Tag("embed-editor")
-@JsModule("./embed-editor/embed-editor.ts")
+@JsModule("./embed-editor.ts")
 public class EmbedEditor extends Component {
 	private Consumer<String> onDone;
 	
