@@ -1,5 +1,14 @@
-import { LitElement, html, customElement, property } from 'lit-element';
+import { html, LitElement } from 'lit';
+import { customElement } from 'lit/decorators.js';
 import * as ec from './classes';
+
+import '@vaadin/text-field';
+import '@vaadin/icon';
+import '@vaadin/icons';
+import '@vaadin/button';
+import '@vaadin/details';
+import '@vaadin/vertical-layout';
+import '@vaadin/horizontal-layout';
 
 @customElement('embed-editor')
 export class EmbedEditor extends LitElement {
@@ -7,8 +16,6 @@ export class EmbedEditor extends LitElement {
     private $server?: any;
 
     message: ec.Message = new ec.Message();
-
-
 
     render() {
         return html`

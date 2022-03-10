@@ -144,6 +144,7 @@ public class DashboardView extends AppLayout{
 			System.out.println("Embed editor submitted "+json);
 		});
 		root.add(editor);
+		
 		return root;
 	}
 	
