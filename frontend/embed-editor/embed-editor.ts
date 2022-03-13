@@ -1,6 +1,10 @@
-import { html, LitElement } from 'lit';
-import { customElement } from 'lit/decorators.js';
+import { css, html, LitElement } from 'lit';
+import { customElement, query } from 'lit/decorators.js';
 import * as ec from './classes';
+import * as fns from 'date-fns';
+import './custom-date-time-picker';
+
+import { createPopper } from '@popperjs/core';
 
 import '@vaadin/text-field';
 import '@vaadin/icon';
@@ -13,9 +17,9 @@ import '@vaadin/checkbox';
 import '@vaadin/date-time-picker';
 import '@vaadin/date-picker';
 import 'vanilla-colorful';
-import { createPopper } from '@popperjs/core';
-import * as fns from 'date-fns';
-import './custom-date-time-picker';
+
+import '@polymer/paper-dialog';
+
 
 @customElement('embed-editor')
 export class EmbedEditor extends LitElement {
@@ -157,7 +161,7 @@ export class EmbedEditor extends LitElement {
                             this.requestUpdate();
                         }}"
                     ></vaadin-text-field>
-                    <vaadin-horizontal-layout style="align-items: flex-start" >
+                    <vaadin-horizontal-layout style="align-items: baseline" >
                         <vaadin-text-field
                             label="Color"
                             minlength="0"
@@ -169,24 +173,26 @@ export class EmbedEditor extends LitElement {
                                 this.requestUpdate();
                             }}"
                         ></vaadin-text-field>
+                        
+
                         <vaadin-button
-                            id = "color-button"
-                            @click = "${(e:any)=>{
-                                var button:any = document.querySelector('#color-button');
-                                var tooltip:any = document.querySelector('#tooltip');
-                                
-                                const popperInstance = createPopper(button, tooltip);
+                            id = "color-button-${i}"
+                            @click = "${(e: CustomEvent) => {
+                                var dialog:any = this.shadowRoot!.querySelector(`#color-dialog-${i}`);
+                                dialog.open();
                             }}"
+                            style = "background-color:${this.message.embeds[i].body.color}"
                         > </vaadin-button>
-                        <div id="tooltip" role="tooltip">
+                        <paper-dialog id="color-dialog-${i}" no-overlap horizontal-align="left" vertical-align="top" style="margin: 0">
                             <hex-color-picker 
+                                style="margin: 0; padding:0"
                                 color="${this.message.embeds[i].body.color}" 
                                 @color-changed="${(e: CustomEvent) => {
                                     this.applyColor(i,e.detail.value);
                                 }}"
                             ></hex-color-picker>
-                            <vaadin-button>test</vaadin-button>
-                        </div>
+                        </paper-dialog>
+
                     </vaadin-horizontal-layout>
                     
                     </vaadin-vertical-layout>

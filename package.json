@@ -141,7 +141,7 @@
       "workbox-precaching": "6.4.2",
       "workbox-webpack-plugin": "6.4.2"
     },
-    "hash": "858bd8243f55fcbbdbb906bb89255ad1e652fa2c8b310267f03acfc446a634f1"
+    "hash": "a910a70c5611afe055b1ecb35e0bdada56552e83bd35cebc48d0a3e63a2117dd"
   },
   "dependencies": {
     "@polymer/iron-icon": "3.0.1",
@@ -149,6 +149,7 @@
     "@polymer/iron-list": "3.1.0",
     "@polymer/iron-meta": "3.0.1",
     "@polymer/iron-resizable-behavior": "3.0.1",
+    "@polymer/paper-dialog": "^3.0.1",
     "@polymer/polymer": "3.4.1",
     "@popperjs/core": "^2.11.3",
     "@spectrum-web-components/overlay": "^0.15.2",
@@ -412,6 +413,7 @@
     "@vaadin-component-factory/vcf-popup": "$@vaadin-component-factory/vcf-popup",
     "@spectrum-web-components/overlay": "$@spectrum-web-components/overlay",
     "@spectrum-web-components/popover": "$@spectrum-web-components/popover",
-    "@popperjs/core": "$@popperjs/core"
+    "@popperjs/core": "$@popperjs/core",
+    "@polymer/paper-dialog": "$@polymer/paper-dialog"
   }
 }
