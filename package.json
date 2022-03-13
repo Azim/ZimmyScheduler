@@ -141,7 +141,7 @@
       "workbox-precaching": "6.4.2",
       "workbox-webpack-plugin": "6.4.2"
     },
-    "hash": "493f08f645225f8739f68112c157b1ab95adab1f472d5015c1f2248477433590"
+    "hash": "858bd8243f55fcbbdbb906bb89255ad1e652fa2c8b310267f03acfc446a634f1"
   },
   "dependencies": {
     "@polymer/iron-icon": "3.0.1",
@@ -150,6 +150,10 @@
     "@polymer/iron-meta": "3.0.1",
     "@polymer/iron-resizable-behavior": "3.0.1",
     "@polymer/polymer": "3.4.1",
+    "@popperjs/core": "^2.11.3",
+    "@spectrum-web-components/overlay": "^0.15.2",
+    "@spectrum-web-components/popover": "^0.11.9",
+    "@vaadin-component-factory/vcf-popup": "^2.0.0",
     "@vaadin/accordion": "23.0.0",
     "@vaadin/app-layout": "23.0.0",
     "@vaadin/avatar": "23.0.0",
@@ -258,8 +262,9 @@
     "@vaadin/virtual-list": "23.0.0",
     "@webcomponents/shadycss": "1.9.6",
     "construct-style-sheets-polyfill": "3.0.4",
-    "date-fns": "2.23.0",
-    "lit": "2.1.4"
+    "date-fns": "^2.23.0",
+    "lit": "2.1.4",
+    "vanilla-colorful": "^0.6.2"
   },
   "devDependencies": {
     "@vaadin/application-theme-plugin": "./build/plugins/application-theme-plugin",
@@ -402,6 +407,11 @@
     "@vaadin/common-frontend": "$@vaadin/common-frontend",
     "construct-style-sheets-polyfill": "$construct-style-sheets-polyfill",
     "date-fns": "$date-fns",
-    "lit": "$lit"
+    "lit": "$lit",
+    "vanilla-colorful": "$vanilla-colorful",
+    "@vaadin-component-factory/vcf-popup": "$@vaadin-component-factory/vcf-popup",
+    "@spectrum-web-components/overlay": "$@spectrum-web-components/overlay",
+    "@spectrum-web-components/popover": "$@spectrum-web-components/popover",
+    "@popperjs/core": "$@popperjs/core"
   }
 }
