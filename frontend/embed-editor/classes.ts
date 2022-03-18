@@ -1,4 +1,5 @@
 import * as d from './discord-classes';
+import * as validators from './validators';
 
 export class Field{
     name: string = '';
@@ -16,8 +17,7 @@ export class EmbedBody{
     title: string = '';
     description: string = '';
     url: string = '';
-    color: string = '#1e88e5';
-    hasColor: boolean = false;
+    color: string = '';
 }
 
 //TODO add possible undefines everywhere applicable
@@ -77,7 +77,7 @@ export class Message{
                 if(embed.body.url.length > 0) ne.url = embed.body.url;
                 if(embed.footer.timestamp.length > 0) ne.timestamp = embed.footer.timestamp;
 
-                if(embed.body.hasColor){
+                if(embed.body.color.length>0 && embed.body.color!='#rrggbb' && validators.isHexColor(embed.body.color)) {
                     //inspired by https://github.com/discohook/site/blob/main/common/input/color/ColorModel.ts#L90
                     const [, red = 0, green = 0, blue = 0] =
                         /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/

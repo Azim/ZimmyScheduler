@@ -99,6 +99,7 @@ public class Repeat implements VelenSlashEvent {
 		String[] parts = cron.split(" ");
 		String seconds = parts[0];
 		String minutes = parts[1];
+		boolean needsHoursApart = false;
 		if(minutes.contains("-")||seconds.contains("-")||seconds.contains("*")||seconds.contains("/")||seconds.contains(",")) {
 			return false;
 		}
@@ -108,9 +109,11 @@ public class Repeat implements VelenSlashEvent {
 			if(m<30) return false;
 		}
 		if(minutes.contains(",")) {
-			int[] mparts = Arrays.stream(minutes.split(",")).mapToInt(Integer::parseInt).toArray();
+			int[] mparts = Arrays.stream(minutes.split(",")).mapToInt(Integer::parseInt).sorted().toArray();
 			int diff = findMinDiff(mparts);
 			if(diff<30) return false;
+			if(mparts.length>2) return false;
+			if(mparts[0]-mparts[1]!=30) needsHoursApart = true;
 		}
 		return true;
 	}
@@ -120,10 +123,12 @@ public class Repeat implements VelenSlashEvent {
     {
         int diff = 60;
         for (int i=0; i<arr.length-1; i++)
-            for (int j=i+1; j<arr.length; j++)
+            for (int j=i+1; j<arr.length; j++) {
                 if (Math.abs((arr[i] - arr[j]) )< diff)
                     diff = Math.abs((arr[i] - arr[j]));
-     
+                
+            }
         return diff;
     }
+	
 }

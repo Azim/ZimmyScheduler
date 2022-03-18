@@ -1,10 +1,10 @@
 import { css, html, LitElement } from 'lit';
-import { customElement, query } from 'lit/decorators.js';
+import { customElement, query, state } from 'lit/decorators.js';
 import * as ec from './classes';
 import * as fns from 'date-fns';
-import './custom-date-time-picker';
+import * as validators from './validators';
 
-import { createPopper } from '@popperjs/core';
+import '../quartz-cron/quartz-cron';
 
 import '@vaadin/text-field';
 import '@vaadin/icon';
@@ -16,9 +16,16 @@ import '@vaadin/horizontal-layout';
 import '@vaadin/checkbox';
 import '@vaadin/date-time-picker';
 import '@vaadin/date-picker';
+import '@vaadin/select';
+import '@vaadin/integer-field';
 import 'vanilla-colorful';
 
 import '@polymer/paper-dialog';
+import { DateTimePicker } from '@vaadin/date-time-picker';
+import { DatePickerDate } from '@vaadin/date-picker';
+import { TextField } from '@vaadin/text-field';
+import { Checkbox } from '@vaadin/checkbox';
+import { TimePickerTime } from '@vaadin/time-picker/src/vaadin-time-picker';
 
 
 @customElement('embed-editor')
@@ -26,11 +33,41 @@ export class EmbedEditor extends LitElement {
     
     private $server?: any;
 
-    message: ec.Message = new ec.Message();
+    private message: ec.Message = new ec.Message();
+
+    private webhook:string = '';
+    private sendTime:string = '';
+    private selectedType:string='once';
+    private repeatMinutes:string = '30';
+    private repeatCron:string = '';
+    private sendNow:boolean = false;
+
+    @state()
+    private repeatTypes = [
+        {
+            label: 'once',
+            value: 'once',
+        },
+        {
+            label: 'each X minutes',
+            value: 'minutes',
+        },
+        {
+            label: 'according to cron expression',
+            value: 'cron',
+        }
+    ];
+
+    
 
     render() {
         return html`
-            <vaadin-vertical-layout>
+            <style>
+            vaadin-text-area, vaadin-text-field, vaadin-password-field, vaadin-details, .embed-edit{
+                width:100%;
+            }
+            </style>
+            <vaadin-vertical-layout style= "width:100%">
                 <vaadin-text-area
                     label="Content ${this.message.content.length}/2000"
                     minlength="0"
@@ -63,26 +100,159 @@ export class EmbedEditor extends LitElement {
                                 this.message.author.avatar_url = e.detail.value;
                                 this.requestUpdate();
                             }}"
+                            error-message="Invalid url format"
                         ></vaadin-text-field>
                     </vaadin-vertical-layout>
                 </vaadin-details>
 
                 ${this.message.embeds.map((embed => this.buildEmbed(embed)))}
 
+                <vaadin-button @click="${(e: any)  => {
+                    this.message.embeds.push(new ec.Embed());
+                    this.requestUpdate();
+                }}">Add embed</vaadin-button>
+                
+                <vaadin-password-field 
+                    label="Webhook url"
+                    pattern = "^https?:\/\/(?:www\.|ptb\.|canary\.)?discord(?:app)?\.com\/api(?:\/v\d+)?\/webhooks\/\d+\/[\w-]+$"
+                    error-message="Invalid webhook url"
+                    @value-changed="${(e: CustomEvent) => {
+                        this.webhook = e.detail.value;
+                    }}"
+                ></vaadin-password-field>
+                
+                <vaadin-select
+                    label="Send message"
+                    .items="${this.repeatTypes}"
+                    .value="${this.repeatTypes[0].value}"
+                    @value-changed="${(e: CustomEvent) => {
+                        this.selectedType = e.detail.value;
+                        this.requestUpdate();
+                    }}"
+                ></vaadin-select>
+
+                ${this.buildChoice()}
+
             </vaadin-vertical-layout>
-            <vaadin-button @click="${(e: any)  => {
-                this.message.embeds.push(new ec.Embed());
-                this.requestUpdate();
-            }}">Add embed</vaadin-button>
-            <vaadin-button @click="${(e: any)  => this.$server.somethingHappened(this.message.toJson())}">Send to server logs lol</vaadin-button>
+            <vaadin-button @click="${(e: any)  => this.$server.somethingHappened(this.message.toJson())}">${this.sendNow?'Send':'Save'}</vaadin-button>
         `;
+    }
+
+    buildChoice(){
+        var dateChangeListener = (e: CustomEvent) => {
+            if(e.detail.value.length>0)
+                this.sendTime = e.detail.value; //TODO local to utc conversion, check if its server time or client time
+            var picker: DateTimePicker = e.currentTarget as DateTimePicker;
+                
+            picker.i18n.formatDate = (dateParts: DatePickerDate): string => {
+                const { year, month, day } = dateParts;
+                const date = new Date(year, month, day);
+                return fns.format(date, 'dd.MM.yyyy');
+            };
+            picker.i18n.parseDate = (inputValue: string): DatePickerDate => {
+                const date = fns.parse(inputValue, 'dd.MM.yyyy', new Date());
+                return { year: date.getFullYear(), month: date.getMonth(), day: date.getDate() };
+            };
+            picker.i18n.formatTime = (dateParts: TimePickerTime): string => {
+                const {hours, minutes, seconds } = dateParts;
+                const pad = (num:string|number, fmt='00') => (fmt+num).substring((fmt+num).length - fmt.length);
+                let timeString = `${pad(hours)}:${pad(minutes)}:${pad(seconds?seconds:0)}`
+                return timeString;
+            };
+            
+            this.requestUpdate();
+            console.log(e.detail.value);
+        };
+        switch (this.selectedType) {
+            case 'once':
+                return html`
+                    <vaadin-horizontal-layout style="align-items: baseline" >
+                        <vaadin-date-time-picker
+                            label="At"
+                            date-placeholder="DD.MM.YYYY"
+                            time-placeholder="hh:mm:ss"
+                            step="${60*15}"
+                            .disabled=${this.sendNow}
+                            value = "${this.sendTime}"
+                            @value-changed="${dateChangeListener}"
+                        ></vaadin-date-time-picker>
+                        <vaadin-checkbox 
+                            label="Right away"
+                            .checked=${this.sendNow}
+                            @change="${
+                            (e: CustomEvent) => {
+                                this.sendNow = !this.sendNow;
+                                this.requestUpdate();
+                            }}"
+                        ></vaadin-checkbox>
+                    </vaadin-horizontal-layout> 
+                `;
+            case 'minutes':
+                return html`
+                    <vaadin-integer-field 
+                        label="X:"
+                        value="${this.repeatMinutes}" 
+                        min="30" 
+                        max="43800"
+                        @value-changed="${ (e: CustomEvent) => (this.repeatMinutes = e.detail.value) }"
+                        error-message="At least 30"
+                    ></vaadin-integer-field>
+                    <vaadin-horizontal-layout style="align-items: baseline" >
+                        <vaadin-date-time-picker
+                            label="Starting at"
+                            date-placeholder="DD.MM.YYYY"
+                            time-placeholder="hh:mm:ss"
+                            step="${60*15}"
+                            .disabled=${this.sendNow}
+                            value = "${this.sendTime}"
+                            @value-changed="${dateChangeListener}"
+                        ></vaadin-date-time-picker>
+                        <vaadin-checkbox 
+                            label="Right away"
+                            .checked=${this.sendNow}
+                            @change="${(e: CustomEvent) => {
+                                this.sendNow = !this.sendNow;
+                                this.requestUpdate();
+                            }}"
+                        ></vaadin-checkbox>
+                    </vaadin-horizontal-layout> 
+                
+                `;
+            case 'cron':
+                return html`
+                    <quartz-cron
+                    
+                    ></quartz-cron>
+                    <vaadin-horizontal-layout style="align-items: baseline" >
+                        <vaadin-date-time-picker
+                            label="Starting at"
+                            date-placeholder="DD.MM.YYYY"
+                            time-placeholder="hh:mm:ss"
+                            step="${60*15}"
+                            .disabled=${this.sendNow}
+                            value = "${this.sendTime}"
+                            @value-changed="${dateChangeListener}"
+                        ></vaadin-date-time-picker>
+                        <vaadin-checkbox 
+                            label="Right away"
+                            .checked=${this.sendNow}
+                            @change="${(e: CustomEvent) => {
+                                this.sendNow = !this.sendNow;
+                                this.requestUpdate();
+                            }}"
+                        ></vaadin-checkbox>
+                    </vaadin-horizontal-layout> 
+                `;
+            default:
+                return html`oopsies`;
+        }
     }
 
     buildEmbed(embed: ec.Embed){
         var i = this.message.embeds.indexOf(embed);
         var name = this.message.embeds[i].body.title;
         return html`
-        <vaadin-horizontal-layout style="align-items: flex-start" >
+        <vaadin-horizontal-layout style="align-items: flex-start" class="embed-edit">
             <vaadin-details opened> <!-- embed -->
                 <div slot="summary">
                     Embed ${i+1}${name.length>0?' - '+name:''}
@@ -96,36 +266,36 @@ export class EmbedEditor extends LitElement {
                 <vaadin-details opened> <!-- embed author -->
                     <div slot="summary">Author</div>
                     <vaadin-vertical-layout>
-                    <vaadin-text-field
-                        label="Author ${this.message.embeds[i].author.author.length}/256"
-                        minlength="0"
-                        maxlength="256"
-                        value = "${this.message.embeds[i].author.author}"
-                        @value-changed="${(e: CustomEvent) => {
-                            this.message.embeds[i].author.author = e.detail.value;
-                            this.requestUpdate();
-                        }}"
-                    ></vaadin-text-field>
-                    <vaadin-text-field
-                        label="Author URL"
-                        minlength="0"
-                        pattern="^(?:https?:\/\/|[%{]).*"
-                        value = "${this.message.embeds[i].author.author_url}"
-                        @value-changed="${(e: CustomEvent) => {
-                            this.message.embeds[i].author.author_url = e.detail.value;
-                            this.requestUpdate();
-                        }}"
-                    ></vaadin-text-field>
-                    <vaadin-text-field
-                        label="Author Icon URL"
-                        minlength="0"
-                        pattern="^(?:https?:\/\/|[%{]).*"
-                        value = "${this.message.embeds[i].author.author_icon_url}"
-                        @value-changed="${(e: CustomEvent) => {
-                            this.message.embeds[i].author.author_icon_url = e.detail.value;
-                            this.requestUpdate();
-                        }}"
-                    ></vaadin-text-field>
+                        <vaadin-text-field
+                            label="Author ${this.message.embeds[i].author.author.length}/256"
+                            minlength="0"
+                            maxlength="256"
+                            value = "${this.message.embeds[i].author.author}"
+                            @value-changed="${(e: CustomEvent) => {
+                                this.message.embeds[i].author.author = e.detail.value;
+                                this.requestUpdate();
+                            }}"
+                        ></vaadin-text-field>
+                        <vaadin-text-field
+                            label="Author URL"
+                            minlength="0"
+                            pattern="^(?:https?:\/\/|[%{]).*"
+                            value = "${this.message.embeds[i].author.author_url}"
+                            @value-changed="${(e: CustomEvent) => {
+                                this.message.embeds[i].author.author_url = e.detail.value;
+                                this.requestUpdate();
+                            }}"
+                        ></vaadin-text-field>
+                        <vaadin-text-field
+                            label="Author Icon URL"
+                            minlength="0"
+                            pattern="^(?:https?:\/\/|[%{]).*"
+                            value = "${this.message.embeds[i].author.author_icon_url}"
+                            @value-changed="${(e: CustomEvent) => {
+                                this.message.embeds[i].author.author_icon_url = e.detail.value;
+                                this.requestUpdate();
+                            }}"
+                        ></vaadin-text-field>
                     </vaadin-vertical-layout>
                 </vaadin-details>
                 <vaadin-details opened> <!-- embed body -->
@@ -166,24 +336,36 @@ export class EmbedEditor extends LitElement {
                             label="Color"
                             minlength="0"
                             maxlength="7"
+                            placeholder="#rrggbb"
                             value = "${this.message.embeds[i].body.color}"
                             @value-changed="${(e: CustomEvent) => {
-                                this.message.embeds[i].body.color = e.detail.value;
-                                this.message.embeds[i].body.hasColor = e.detail.value.length>0;
+                                if(validators.isHexColor(e.detail.value)||e.detail.value.length==0){
+                                    this.message.embeds[i].body.color = e.detail.value;
+                                }
                                 this.requestUpdate();
                             }}"
                         ></vaadin-text-field>
                         
-
                         <vaadin-button
                             id = "color-button-${i}"
                             @click = "${(e: CustomEvent) => {
                                 var dialog:any = this.shadowRoot!.querySelector(`#color-dialog-${i}`);
+                                dialog.positionTarget = e.currentTarget;
                                 dialog.open();
                             }}"
-                            style = "background-color:${this.message.embeds[i].body.color}"
+                            style = "background-color:${this.message.embeds[i].body.color}; min-width: var(--lumo-button-size);"
                         > </vaadin-button>
-                        <paper-dialog id="color-dialog-${i}" no-overlap horizontal-align="left" vertical-align="top" style="margin: 0">
+                        <vaadin-button
+                            theme = "icon"
+                            @click = "${(e: CustomEvent) => {
+                                this.message.embeds[i].body.color = '';
+                                this.requestUpdate();
+                            }}"
+                            style = "background-color:${this.message.embeds[i].body.color}; min-width: var(--lumo-button-size);"
+                        >
+                            <vaadin-icon icon="vaadin:close-small"></vaadin-icon>
+                        </vaadin-button>
+                        <paper-dialog id="color-dialog-${i}" no-overlap horizontal-align="right" vertical-align="top" style="margin: 0;border-radius: 8px 8px 8px 8px;">
                             <hex-color-picker 
                                 style="margin: 0; padding:0"
                                 color="${this.message.embeds[i].body.color}" 
@@ -234,17 +416,29 @@ export class EmbedEditor extends LitElement {
                                 this.requestUpdate();
                             }}"
                         ></vaadin-text-area>
-                        <custom-date-time-picker
+                        <vaadin-date-time-picker
                             label="Timestamp"
-                            date-placeholder="DD/MM/YYYY"
+                            date-placeholder="DD.MM.YYYY"
                             time-placeholder="hh:mm:ss"
-                            step="1"
+                            step="60*5"
+
                             @value-changed="${(e: CustomEvent) => {
-                                this.message.embeds[i].footer.timestamp = e.detail.value; //TODO proper format for input and result, local to utc conversion, check if its server time or client time
-                                console.log(e.detail.value);
+                                this.message.embeds[i].footer.timestamp = e.detail.value; //TODO local to utc conversion, check if its server time or client time
+                                var picker: DateTimePicker = e.currentTarget as DateTimePicker;
+                                
+                                picker.i18n.formatDate = (dateParts: DatePickerDate): string => {
+                                    const { year, month, day } = dateParts;
+                                    const date = new Date(year, month, day);
+                                    return fns.format(date, 'dd.MM.yyyy');
+                                };
+                                picker.i18n.parseDate = (inputValue: string): DatePickerDate => {
+                                    const date = fns.parse(inputValue, 'dd.MM.yyyy', new Date());
+                                    return { year: date.getFullYear(), month: date.getMonth(), day: date.getDate() };
+                                };
                                 this.requestUpdate();
+                                console.log(e.detail.value);
                             }}"
-                        ></custom-date-time-picker>
+                        ></vaadin-date-time-picker>
                         
                         <vaadin-text-field
                             label="Footer Icon URL"
@@ -265,8 +459,8 @@ export class EmbedEditor extends LitElement {
     }
 
     applyColor(i:number, color:any){
+        if(color.length<7) return; //not sure how but on init it gives #000 :concern:
         this.message.embeds[i].body.color = color;
-        this.message.embeds[i].body.hasColor = color.length>0;
         this.requestUpdate();
     }
 

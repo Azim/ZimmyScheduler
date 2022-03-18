@@ -141,7 +141,7 @@
       "workbox-precaching": "6.4.2",
       "workbox-webpack-plugin": "6.4.2"
     },
-    "hash": "a910a70c5611afe055b1ecb35e0bdada56552e83bd35cebc48d0a3e63a2117dd"
+    "hash": "c7f0b775123d5a01a01ddbc7824ff8e852770888f48ae356d968c421a4dc3127"
   },
   "dependencies": {
     "@polymer/iron-icon": "3.0.1",
@@ -151,10 +151,6 @@
     "@polymer/iron-resizable-behavior": "3.0.1",
     "@polymer/paper-dialog": "^3.0.1",
     "@polymer/polymer": "3.4.1",
-    "@popperjs/core": "^2.11.3",
-    "@spectrum-web-components/overlay": "^0.15.2",
-    "@spectrum-web-components/popover": "^0.11.9",
-    "@vaadin-component-factory/vcf-popup": "^2.0.0",
     "@vaadin/accordion": "23.0.0",
     "@vaadin/app-layout": "23.0.0",
     "@vaadin/avatar": "23.0.0",
@@ -263,6 +259,7 @@
     "@vaadin/virtual-list": "23.0.0",
     "@webcomponents/shadycss": "1.9.6",
     "construct-style-sheets-polyfill": "3.0.4",
+    "cronstrue": "^2.1.0",
     "date-fns": "^2.23.0",
     "lit": "2.1.4",
     "vanilla-colorful": "^0.6.2"
@@ -410,10 +407,7 @@
     "date-fns": "$date-fns",
     "lit": "$lit",
     "vanilla-colorful": "$vanilla-colorful",
-    "@vaadin-component-factory/vcf-popup": "$@vaadin-component-factory/vcf-popup",
-    "@spectrum-web-components/overlay": "$@spectrum-web-components/overlay",
-    "@spectrum-web-components/popover": "$@spectrum-web-components/popover",
-    "@popperjs/core": "$@popperjs/core",
-    "@polymer/paper-dialog": "$@polymer/paper-dialog"
+    "@polymer/paper-dialog": "$@polymer/paper-dialog",
+    "cronstrue": "$cronstrue"
   }
 }
