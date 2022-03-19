@@ -122,6 +122,7 @@ export class EmbedEditor extends LitElement {
                 ></vaadin-password-field>
                 
                 <vaadin-select
+                    style="width:16.5em;"
                     label="Send message"
                     .items="${this.repeatTypes}"
                     .value="${this.repeatTypes[0].value}"
