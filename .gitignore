@@ -14,10 +14,8 @@ bin
 logs
 node_modules
 target
+out
 frontend/generated
-frontend/index.html
 webpack.generated.js
-package-lock.json
 pnpmfile.js
 .npmrc
-pnpm-lock.yaml

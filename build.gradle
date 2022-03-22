@@ -2,7 +2,7 @@ plugins {
     id 'java'
 	id 'org.springframework.boot' version '2.6.3'
 	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
-	id 'com.vaadin' version '22.0.5'
+	id 'com.vaadin' version '23.0.0'
     id 'eclipse'
 }
 
@@ -23,10 +23,6 @@ version = '0.0.1'
 sourceCompatibility = 16
 targetCompatibility = 16
 compileJava.options.encoding = 'UTF-8'
-
-ext {
-	set('vaadinVersion', "22.0.5")
-}
 
 dependencies {
     implementation 'com.google.guava:guava:28.0-jre'

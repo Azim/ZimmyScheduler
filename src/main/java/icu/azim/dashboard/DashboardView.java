@@ -49,6 +49,8 @@ import redis.clients.jedis.Jedis;
 @PageTitle("Zimmy dashboard")
 @AnonymousAllowed
 public class DashboardView extends AppLayout{
+	
+	//TODO https://discord.com/channels/668218342779256857/780558939217461298/953747169268101151
     private final OAuth2AuthorizedClientService clientService;
     private Optional<JsonObject> currentUser; //TODO wrapper object with no optional
     private Optional<JsonArray> currentUserGuilds;
@@ -111,6 +113,7 @@ public class DashboardView extends AppLayout{
 	private Component buildAbout() {
 		VerticalLayout root = new VerticalLayout();
 		root.setAlignItems(Alignment.START);
+		root.getStyle().set("flex-wrap", "wrap");
 		root.add(
 			new H3("Zimmy the discord message scheduler"),
 			new Span("A simple bot to plan/schedule webhook messages, including repeating ones (via cron or set time period)"),
@@ -144,6 +147,7 @@ public class DashboardView extends AppLayout{
 			System.out.println("Embed editor submitted "+json);
 		});
 		root.add(editor);
+		
 		return root;
 	}
 	
