@@ -42,7 +42,6 @@ export class EmbedEditor extends LitElement {
     private repeatCron:string = '';
     private sendNow:boolean = false;
 
-    @state()
     private repeatTypes = [
         {
             label: 'once',
@@ -58,16 +57,22 @@ export class EmbedEditor extends LitElement {
         }
     ];
 
-    
+    static styles = css`
+        vaadin-text-area, vaadin-text-field, vaadin-password-field, vaadin-details{
+            width:100%;
+        }
+        
+        :host{
+            width:100%;
+            display:flex;
+            flex-direction:column;
+            align-items:flex-start;
+        }
+    `;
 
     render() {
         return html`
-            <style>
-            vaadin-text-area, vaadin-text-field, vaadin-password-field, vaadin-details, .embed-edit{
-                width:100%;
-            }
-            </style>
-            <vaadin-vertical-layout style= "width:100%">
+            <!-- <vaadin-vertical-layout style= "width:100%"> -->
                 <vaadin-text-area
                     label="Content ${this.message.content.length}/2000"
                     minlength="0"
@@ -133,8 +138,7 @@ export class EmbedEditor extends LitElement {
                 ></vaadin-select>
 
                 ${this.buildChoice()}
-
-            </vaadin-vertical-layout>
+            <!-- </vaadin-vertical-layout> -->
             <vaadin-button @click="${(e: any)  => this.$server.somethingHappened(this.message.toJson())}">${this.sendNow?'Send':'Save'}</vaadin-button>
         `;
     }

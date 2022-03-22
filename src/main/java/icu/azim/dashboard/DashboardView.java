@@ -146,7 +146,6 @@ public class DashboardView extends AppLayout{
 		EmbedEditor editor = new EmbedEditor(json->{
 			System.out.println("Embed editor submitted "+json);
 		});
-		editor.getElement().getStyle().set("width", "100%");
 		root.add(editor);
 		
 		return root;
