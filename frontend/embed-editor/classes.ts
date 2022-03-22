@@ -62,6 +62,18 @@ export class Message{
         this.embeds = [];
     }
 
+    toDiscohook(){
+        var obj = {
+            messages: [
+                {
+                    data: JSON.parse(this.toJson())
+                }
+            ]
+        }
+
+        return 'https://discohook.org/?message='+btoa(JSON.stringify(obj));
+    }
+
     toJson(){//TODO check if not everything is empty somewhere else
         var res = new d.WebhookMessage();
         if(this.content.length>0) res.content = this.content;

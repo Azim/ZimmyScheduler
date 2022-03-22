@@ -140,8 +140,10 @@ export class EmbedEditor extends LitElement {
                 ${this.buildChoice()}
             <!-- </vaadin-vertical-layout> -->
             <vaadin-button @click="${(e: any)  => this.$server.somethingHappened(this.message.toJson())}">${this.sendNow?'Send':'Save'}</vaadin-button>
+            <a target="_blank" href="${this.message.toDiscohook()}">${'Show in discohook'}</a>
         `;
     }
+
 
     buildChoice(){
         var dateChangeListener = (e: CustomEvent) => {
