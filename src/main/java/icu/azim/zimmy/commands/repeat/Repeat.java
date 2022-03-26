@@ -102,7 +102,7 @@ public class Repeat implements VelenSlashEvent {
 		String minutes = parts[1];
 		String hours = parts[2];
 		boolean needsHoursApart = false;
-		if(minutes.contains("-")||seconds.contains("-")||seconds.contains("*")||seconds.contains("/")||seconds.contains(",")) {
+		if(minutes.contains("*")||minutes.contains("-")||seconds.contains("-")||seconds.contains("*")||seconds.contains("/")||seconds.contains(",")) {
 			return false;
 		}
 		if(minutes.contains("/")) {

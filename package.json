@@ -141,9 +141,10 @@
       "workbox-precaching": "6.4.2",
       "workbox-webpack-plugin": "6.4.2"
     },
-    "hash": "c7f0b775123d5a01a01ddbc7824ff8e852770888f48ae356d968c421a4dc3127"
+    "hash": "25e950041b03f19da3a7701b40388954424c513471711c8e2624b7b37dcbef72"
   },
   "dependencies": {
+    "@joshoy/quartz-cron-parser": "^0.1.5",
     "@polymer/iron-icon": "3.0.1",
     "@polymer/iron-iconset-svg": "3.0.1",
     "@polymer/iron-list": "3.1.0",
@@ -408,6 +409,7 @@
     "lit": "$lit",
     "vanilla-colorful": "$vanilla-colorful",
     "@polymer/paper-dialog": "$@polymer/paper-dialog",
-    "cronstrue": "$cronstrue"
+    "cronstrue": "$cronstrue",
+    "@joshoy/quartz-cron-parser": "$@joshoy/quartz-cron-parser"
   }
 }

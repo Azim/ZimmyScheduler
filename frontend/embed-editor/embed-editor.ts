@@ -68,6 +68,10 @@ export class EmbedEditor extends LitElement {
             flex-direction:column;
             align-items:flex-start;
         }
+        
+        .hidden{
+            display: none;
+        }
     `;
 
     render() {
@@ -139,7 +143,7 @@ export class EmbedEditor extends LitElement {
 
                 ${this.buildChoice()}
             <!-- </vaadin-vertical-layout> -->
-            <vaadin-button @click="${(e: any)  => this.$server.somethingHappened(this.message.toJson())}">${this.sendNow?'Send':'Save'}</vaadin-button>
+            <vaadin-button @click="${(e: any)  => this.$server.somethingHappened(this.message.toJson())}">${(this.sendNow?'Send':'Save')+'(not really)'}</vaadin-button>
             <a target="_blank" href="${this.message.toDiscohook()}">${'Show in discohook'}</a>
         `;
     }
@@ -166,93 +170,49 @@ export class EmbedEditor extends LitElement {
                 let timeString = `${pad(hours)}:${pad(minutes)}:${pad(seconds?seconds:0)}`
                 return timeString;
             };
-            
             this.requestUpdate();
             console.log(e.detail.value);
         };
-        switch (this.selectedType) {
-            case 'once':
-                return html`
-                    <vaadin-horizontal-layout style="align-items: baseline" >
-                        <vaadin-date-time-picker
-                            label="At"
-                            date-placeholder="DD.MM.YYYY"
-                            time-placeholder="hh:mm:ss"
-                            step="${60*15}"
-                            .disabled=${this.sendNow}
-                            value = "${this.sendTime}"
-                            @value-changed="${dateChangeListener}"
-                        ></vaadin-date-time-picker>
-                        <vaadin-checkbox 
-                            label="Right away"
-                            .checked=${this.sendNow}
-                            @change="${
-                            (e: CustomEvent) => {
-                                this.sendNow = !this.sendNow;
-                                this.requestUpdate();
-                            }}"
-                        ></vaadin-checkbox>
-                    </vaadin-horizontal-layout> 
-                `;
-            case 'minutes':
-                return html`
-                    <vaadin-integer-field 
-                        label="X:"
-                        value="${this.repeatMinutes}" 
-                        min="30" 
-                        max="43800"
-                        @value-changed="${ (e: CustomEvent) => (this.repeatMinutes = e.detail.value) }"
-                        error-message="At least 30"
-                    ></vaadin-integer-field>
-                    <vaadin-horizontal-layout style="align-items: baseline" >
-                        <vaadin-date-time-picker
-                            label="Starting at"
-                            date-placeholder="DD.MM.YYYY"
-                            time-placeholder="hh:mm:ss"
-                            step="${60*15}"
-                            .disabled=${this.sendNow}
-                            value = "${this.sendTime}"
-                            @value-changed="${dateChangeListener}"
-                        ></vaadin-date-time-picker>
-                        <vaadin-checkbox 
-                            label="Right away"
-                            .checked=${this.sendNow}
-                            @change="${(e: CustomEvent) => {
-                                this.sendNow = !this.sendNow;
-                                this.requestUpdate();
-                            }}"
-                        ></vaadin-checkbox>
-                    </vaadin-horizontal-layout> 
-                
-                `;
-            case 'cron':
-                return html`
-                    <quartz-cron
-                    
-                    ></quartz-cron>
-                    <vaadin-horizontal-layout style="align-items: baseline" >
-                        <vaadin-date-time-picker
-                            label="Starting at"
-                            date-placeholder="DD.MM.YYYY"
-                            time-placeholder="hh:mm:ss"
-                            step="${60*15}"
-                            .disabled=${this.sendNow}
-                            value = "${this.sendTime}"
-                            @value-changed="${dateChangeListener}"
-                        ></vaadin-date-time-picker>
-                        <vaadin-checkbox 
-                            label="Right away"
-                            .checked=${this.sendNow}
-                            @change="${(e: CustomEvent) => {
-                                this.sendNow = !this.sendNow;
-                                this.requestUpdate();
-                            }}"
-                        ></vaadin-checkbox>
-                    </vaadin-horizontal-layout> 
-                `;
-            default:
-                return html`oopsies`;
-        }
+
+        return html`
+            <vaadin-integer-field 
+                class="${this.selectedType=='minutes'?'':'hidden'}"
+                label="X:"
+                value="${this.repeatMinutes}" 
+                min="30" 
+                max="43800"
+                @value-changed="${ (e: CustomEvent) => (this.repeatMinutes = e.detail.value) }"
+                error-message="At least 30"
+            ></vaadin-integer-field>
+
+            <quartz-cron
+                class="${this.selectedType=='cron'?'':'hidden'}"
+                @value-changed="${ (e: CustomEvent) => {
+                    console.log('quartz-cron',e);
+                }}"
+            ></quartz-cron>
+
+            <vaadin-horizontal-layout style="align-items: baseline" >
+                <vaadin-date-time-picker
+                    label="Starting at"
+                    date-placeholder="DD.MM.YYYY"
+                    time-placeholder="hh:mm:ss"
+                    step="${60*15}"
+                    .disabled=${this.sendNow}
+                    value = "${this.sendTime}"
+                    @value-changed="${dateChangeListener}"
+                ></vaadin-date-time-picker>
+                <vaadin-checkbox 
+                    label="Right away"
+                    .checked=${this.sendNow}
+                    @change="${(e: CustomEvent) => {
+                        this.sendNow = !this.sendNow;
+                        this.requestUpdate();
+                    }}"
+                ></vaadin-checkbox>
+            </vaadin-horizontal-layout> 
+        `;
+        
     }
 
     buildEmbed(embed: ec.Embed){
