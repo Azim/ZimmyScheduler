@@ -141,7 +141,7 @@
       "workbox-precaching": "6.4.2",
       "workbox-webpack-plugin": "6.4.2"
     },
-    "hash": "25e950041b03f19da3a7701b40388954424c513471711c8e2624b7b37dcbef72"
+    "hash": "e8f5c8bb9897212d42f5206b755ff3a9e87967c3fdbb1022c63a0acaabe9481d"
   },
   "dependencies": {
     "@joshoy/quartz-cron-parser": "^0.1.5",
@@ -152,6 +152,7 @@
     "@polymer/iron-resizable-behavior": "3.0.1",
     "@polymer/paper-dialog": "^3.0.1",
     "@polymer/polymer": "3.4.1",
+    "@skyra/discord-components-core": "^3.1.1",
     "@vaadin/accordion": "23.0.0",
     "@vaadin/app-layout": "23.0.0",
     "@vaadin/avatar": "23.0.0",
@@ -410,6 +411,7 @@
     "vanilla-colorful": "$vanilla-colorful",
     "@polymer/paper-dialog": "$@polymer/paper-dialog",
     "cronstrue": "$cronstrue",
-    "@joshoy/quartz-cron-parser": "$@joshoy/quartz-cron-parser"
+    "@joshoy/quartz-cron-parser": "$@joshoy/quartz-cron-parser",
+    "@skyra/discord-components-core": "$@skyra/discord-components-core"
   }
 }

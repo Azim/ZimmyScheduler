@@ -1,0 +1,5 @@
+:host, :host([theme~='primary']){
+    background: rgb(88, 101, 242);
+    border-color: rgb(88, 101, 242);
+    color: rgb(255, 255, 255);
+}

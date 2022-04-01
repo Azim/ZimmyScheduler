@@ -1,5 +1,7 @@
 import * as d from './discord-classes';
 import * as validators from './validators';
+import '@skyra/discord-components-core';
+import { html } from 'lit';
 
 export class Field{
     name: string = '';
@@ -70,11 +72,62 @@ export class Message{
                 }
             ]
         }
-
         return 'https://discohook.org/?message='+btoa(JSON.stringify(obj));
     }
 
-    toJson(){//TODO check if not everything is empty somewhere else
+    toPreview(){
+        window.$discordMessage = {
+            profiles: {
+                preview: {
+                    author: this.author.username,
+                    avatar: this.author.avatar_url,
+                    bot: true,
+                    verified: false
+                }
+            }
+        }
+
+        return html`
+            <discord-messages>
+                <discord-message 
+                    author="${this.author.username.length>0?this.author.username:'Webhook username'}" 
+                    avatar="${this.author.avatar_url.length>0?this.author.avatar_url:'https://cdn.discordapp.com/attachments/654503812593090602/665721752277483540/red.png'}" 
+                bot>
+                    ${this.content}
+                    ${this.embeds.map(embed=>{
+                        return html`
+                            <discord-embed
+                                slot="embeds"
+                                author-image="${embed.author.author_icon_url}"
+                                author-name="${embed.author.author}"
+                                author-url="${embed.author.author_url}"
+                                color="${embed.body.color}"
+                                embed-title="${embed.body.title}"
+                                image="${embed.image_url}"
+                                thumbnail="${embed.thumbnail_url}"
+                                url="${embed.body.url}"
+                            >
+                                <discord-embed-description slot="description">
+                                    ${embed.body.description}
+                                </discord-embed-description>
+                                <discord-embed-fields slot="fields">
+                                    ${embed.fields.map(field=>{
+                                        return html`
+                                            <discord-embed-field field-title="${field.name}">${field.value}</discord-embed-field>
+                                        `;
+                                    })}
+                                </discord-embed-fields>
+                            </discord-embed>
+                        `;
+                    })}
+
+                </discord-message>
+            </discord-messages>
+        `;
+
+    }
+
+    toDiscordFormat(){
         var res = new d.WebhookMessage();
         if(this.content.length>0) res.content = this.content;
         if(this.author.username.length>0) res.username = this.author.username;
@@ -117,6 +170,10 @@ export class Message{
                 res.embeds?.push(ne);
             });
         }
-        return JSON.stringify(res);
+        return res;
+    }
+
+    toJson(){//TODO check if not everything is empty somewhere else
+        return JSON.stringify(this.toDiscordFormat());
     }
 }

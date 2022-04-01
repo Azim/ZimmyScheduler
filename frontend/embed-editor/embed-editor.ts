@@ -3,6 +3,7 @@ import { customElement, query, state } from 'lit/decorators.js';
 import * as ec from './classes';
 import * as fns from 'date-fns';
 import * as validators from './validators';
+import {readableExpressionLabel} from '../quartz-cron/quartz-cron';
 
 import '../quartz-cron/quartz-cron';
 
@@ -19,6 +20,9 @@ import '@vaadin/date-picker';
 import '@vaadin/select';
 import '@vaadin/integer-field';
 import 'vanilla-colorful';
+
+import '@skyra/discord-components-core';
+import { defineCustomElements } from "@skyra/discord-components-core/loader";
 
 import '@polymer/paper-dialog';
 import { DateTimePicker } from '@vaadin/date-time-picker';
@@ -41,6 +45,13 @@ export class EmbedEditor extends LitElement {
     private repeatMinutes:string = '30';
     private repeatCron:string = '';
     private sendNow:boolean = false;
+    
+    private user_expression:string = '0 0 0 ? * * *';
+
+    constructor(){
+        super();
+        defineCustomElements();
+    }
 
     private repeatTypes = [
         {
@@ -65,18 +76,29 @@ export class EmbedEditor extends LitElement {
         :host{
             width:100%;
             display:flex;
-            flex-direction:column;
+            flex-direction:row;
             align-items:flex-start;
         }
         
         .hidden{
             display: none;
         }
+
+        .discord-message, .discord-messages, .discord-embed, .discord-embed-wrapper, .discord-embed-grid {
+            width:100%;
+        }
+        .discord-message {
+            padding-right: 0 !important;
+        }
+        .discord-embed .discord-embed-description{
+            white-space: inherit;
+        }
+
     `;
 
     render() {
         return html`
-            <!-- <vaadin-vertical-layout style= "width:100%"> -->
+            <vaadin-vertical-layout style= "width:100%"> 
                 <vaadin-text-area
                     label="Content ${this.message.content.length}/2000"
                     minlength="0"
@@ -142,9 +164,12 @@ export class EmbedEditor extends LitElement {
                 ></vaadin-select>
 
                 ${this.buildChoice()}
-            <!-- </vaadin-vertical-layout> -->
-            <vaadin-button @click="${(e: any)  => this.$server.somethingHappened(this.message.toJson())}">${(this.sendNow?'Send':'Save')+'(not really)'}</vaadin-button>
-            <a target="_blank" href="${this.message.toDiscohook()}">${'Show in discohook'}</a>
+                <vaadin-button @click="${(e: any)  => this.$server.somethingHappened(this.message.toJson())}">${(this.sendNow?'Send':'Save')+'(not really)'}</vaadin-button>
+                <a target="_blank" href="${this.message.toDiscohook()}">${'Show in discohook'}</a>
+            </vaadin-vertical-layout>
+            <vaadin-vertical-layout style= "width:100%">
+                ${this.message.toPreview()}
+            </vaadin-vertical-layout>
         `;
     }
 
@@ -185,12 +210,26 @@ export class EmbedEditor extends LitElement {
                 error-message="At least 30"
             ></vaadin-integer-field>
 
-            <quartz-cron
-                class="${this.selectedType=='cron'?'':'hidden'}"
-                @value-changed="${ (e: CustomEvent) => {
-                    console.log('quartz-cron',e);
-                }}"
-            ></quartz-cron>
+            <div class="${this.selectedType=='cron'?'':'hidden'}">
+                <vaadin-text-field
+                    id="user-cron-input"
+                    .value="${this.user_expression}"
+                    @value-changed="${(e: CustomEvent) =>{
+                        this.user_expression = e.detail.value.trim();
+                        this.requestUpdate();
+                    }}"
+                >
+                    ${readableExpressionLabel(this.user_expression)}
+                    <div slot="helper">
+                        <a href="https://www.freeformatter.com/cron-expression-generator-quartz.html#cronexpressionexamples">Quartz cron expression</a>
+                    </div>
+                </vaadin-text-field> 
+                <quartz-cron
+                    @value-changed="${ (e: CustomEvent) => {
+                        console.log('quartz-cron',e);
+                    }}"
+                ></quartz-cron>
+            </div>
 
             <vaadin-horizontal-layout style="align-items: baseline" >
                 <vaadin-date-time-picker

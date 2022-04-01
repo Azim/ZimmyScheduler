@@ -88,7 +88,6 @@ function areHoursNextToEachOther(hours:units){
     return false;
 }
 
-
 function getFullName(weekday:string|number){
     switch (weekday) {
         case 1:
@@ -136,7 +135,6 @@ function getShortName(weekday:number){
             return '';
     }
 }
-
 function getDayNumber(weekday:string){
     switch (weekday) {
         case 'Sunday':
@@ -165,6 +163,76 @@ function getDayNumber(weekday:string){
     }
 }
 
+export function readableExpressionLabel(expression:string){
+    let error = getErrorMessage(expression);
+    return html`
+        <div slot = "label">
+            ${error.length==0 
+                ?
+                cronstrue.toString(expression, { use24HourTimeFormat: true, verbose:true, throwExceptionOnParseError:false, dayOfWeekStartIndexZero:false })
+                :
+                error
+            }
+        </div>
+    `;
+}
+
+function getErrorMessage(expression:string){
+    let parts = expression.trim().split(' ');
+    if(parts.length!=7){
+        return 'Invalid expression (must be 7 sections)';
+    }
+    let parseResult = cronParser.parse(expression);
+    if(parseResult.error!=null){
+        return 'Invalid expression';
+    }
+    if(!doesMatchLimits(expression)){
+        return 'Minimum allowed time between executions is 30 minutes';
+    }
+    return '';
+}
+
+function doesMatchLimits(input:string){
+    let parts = input.split(' ');
+    if(parts.length != 7) return false;
+    let seconds = parts[0];
+    if(seconds.includes('*')||seconds.includes('-')||seconds.includes('/')||seconds.includes(',')) return false;
+    let minutes = parts[1];
+    if(minutes.includes('*')||minutes.includes('-')) return false;
+    if(minutes.includes('/'))
+        if(Number(minutes.split('/')[1])<30) return false;
+    let allowHoursNear = true;
+    if(minutes.includes(',')){
+        let mins = minutes.split(',');
+        if(mins.length>2) return false;
+        mins.sort();
+        let diff = Math.abs(Number(mins[0]) - Number(mins[mins.length-1]));
+        allowHoursNear = (diff == 30);
+        if(diff<30) return false;
+    }
+    if (!allowHoursNear) {
+        let hours = parts[2];
+        if (hours.includes('*') || hours.includes('-')) return false;
+
+        if (hours.includes("/"))
+            if (Number(hours.split("/")[1]) < 2) return false;
+
+        if (hours.includes(",")) {
+            let hs = hours.split(',');
+            if (hs.includes('0') && hs.includes('23')) return false;
+            hs.sort();
+            for(let i = 0; i< hs.length-1; i++){
+                let a = hs[i];
+                let b = hs[i+1];
+                if(Math.abs(Number(b)-Number(a))==1){
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+}
+
 @customElement('quartz-cron')
 export class QuartzCron extends LitElement {
 
@@ -172,7 +240,6 @@ export class QuartzCron extends LitElement {
         return newValue != oldValue;
     }})
     expression:string='0 0 0 ? * * *';
-    user_expression:string = '0 0 0 ? * * *';
 
     selectedTab:number=0;
 
@@ -304,40 +371,13 @@ export class QuartzCron extends LitElement {
     `;
 
     render() {
-        let readableExpression = (expression:string)=>{
-            let error = this.getErrorMessage(expression);
-            return html`
-                <div slot = "label">
-                    ${error.length==0 
-                        ?
-                        cronstrue.toString(expression, { use24HourTimeFormat: true, verbose:true, throwExceptionOnParseError:false, dayOfWeekStartIndexZero:false })
-                        :
-                        error
-                    }
-                </div>
-            `;
-        }
 
         return html`
-            <vaadin-text-field
-                id="user-cron-input"
-                .value="${this.user_expression}"
-                @value-changed="${(e: CustomEvent) =>{
-                    this.user_expression = e.detail.value.trim();
-                    this.requestUpdate();
-                }}"
-            >
-                ${readableExpression(this.user_expression)}
-                <div slot="helper">
-                    <a href="https://www.freeformatter.com/cron-expression-generator-quartz.html#cronexpressionexamples">Quartz cron expression</a>
-                </div>
-            </vaadin-text-field>   
-            
             <vaadin-text-field
                 id="builder-cron-output"
                 .value="${this.expression}"
             readonly>
-                ${readableExpression(this.expression)}
+                ${readableExpressionLabel(this.expression)}
             </vaadin-text-field>   
             
             <vaadin-tabs 
@@ -358,62 +398,6 @@ export class QuartzCron extends LitElement {
             </vaadin-tabs>
             ${this.buildContent()}
         `;
-    }
-
-    getErrorMessage(expression:string){
-        let parts = expression.trim().split(' ');
-        if(parts.length!=7){
-            return 'Invalid expression (must be 7 sections)';
-        }
-        let parseResult = cronParser.parse(expression);
-        if(parseResult.error!=null){
-            return 'Invalid expression';
-        }
-        if(!this.doesMatchLimits(expression)){
-            return 'Minimum allowed time between executions is 30 minutes';
-        }
-        return '';
-    }
-
-    doesMatchLimits(input:string){
-        let parts = input.split(' ');
-        if(parts.length != 7) return false;
-        let seconds = parts[0];
-        if(seconds.includes('*')||seconds.includes('-')||seconds.includes('/')||seconds.includes(',')) return false;
-        let minutes = parts[1];
-        if(minutes.includes('*')||minutes.includes('-')) return false;
-        if(minutes.includes('/'))
-            if(Number(minutes.split('/')[1])<30) return false;
-        let allowHoursNear = true;
-        if(minutes.includes(',')){
-            let mins = minutes.split(',');
-            if(mins.length>2) return false;
-            mins.sort();
-            let diff = Math.abs(Number(mins[0]) - Number(mins[mins.length-1]));
-            allowHoursNear = (diff == 30);
-            if(diff<30) return false;
-        }
-        if (!allowHoursNear) {
-            let hours = parts[2];
-            if (hours.includes('*') || hours.includes('-')) return false;
-
-            if (hours.includes("/"))
-                if (Number(hours.split("/")[1]) < 2) return false;
-
-            if (hours.includes(",")) {
-                let hs = hours.split(',');
-                if (hs.includes('0') && hs.includes('23')) return false;
-                hs.sort();
-                for(let i = 0; i< hs.length-1; i++){
-                    let a = hs[i];
-                    let b = hs[i+1];
-                    if(Math.abs(Number(b)-Number(a))==1){
-                        return false;
-                    }
-                }
-            }
-        }
-        return true;
     }
 
     updateExpression(){
@@ -1303,19 +1287,11 @@ export class QuartzCron extends LitElement {
                 }
                 break;
             case 'days':
-                isEnabled = (i:number)=>{
-                    return this.days.is_selected_unit;
-                }
                 isChecked = (i:number)=>{
                     return this.days.selected.includes(i.toString());
                 }
-                break;
-            case 'months':
                 isEnabled = (i:number)=>{
-                    return this.months.is_selected;
-                }
-                isChecked = (i:number)=>{
-                    return this.months.selected.includes(i.toString());
+                    return true;
                 }
                 break;
             case 'years':
@@ -1329,7 +1305,7 @@ export class QuartzCron extends LitElement {
                 break;
             default:
                 isEnabled = (i:number)=>{
-                    console.log('unexpected behaivor reached');
+                    console.log('unexpected behaivor reached:', type);
                     return true;
                 }
                 break;

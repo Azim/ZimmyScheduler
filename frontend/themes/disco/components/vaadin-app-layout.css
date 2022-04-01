@@ -1,0 +1,10 @@
+[part='navbar']::before {
+    background: rgb(54, 57, 63);
+    border-bottom: 1px solid rgb(32, 34, 37);
+    box-shadow: rgb(0 0 0 / 16%) 0px 4px 4px;
+    opacity: 1;
+}
+
+[content] {
+    background: rgb(54, 57, 63);
+}
