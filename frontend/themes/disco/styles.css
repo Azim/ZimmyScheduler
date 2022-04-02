@@ -3,16 +3,20 @@
     text-rendering: optimizeLegibility;
     --lumo-primary-text-color: rgb(255, 255, 255);
     --lumo-secondary-text-color: rgb(163, 163, 163);
+    --lumo-contrast-60pct: var(--lumo-secondary-text-color);
+    --lumo-contrast-90pct: var(--lumo-secondary-text-color);
     --lumo-disabled-text-color:rgb(116, 116, 116);
     --lumo-body-text-color: var(--lumo-primary-text-color);
     --lumo-header-text-color: rgb(255,255,255);
     --lumo-contrast-10pct: rgb(41, 43, 47);
+    --lumo-contrast-30pct: rgb(41, 43, 47);
+    --lumo-contrast-5pct:rgb(64,68,75);
+    --lumo-base-color:rgb(41, 43, 47);
+    --lumo-primary-color:rgb(88, 101, 242);
 }
-
 vaadin-tab {
     font-weight:600;
 }
-
-vaadin-details [slot='summary']{
-    user-select: none;
+vaadin-vertical-layout{
+    color:white;
 }

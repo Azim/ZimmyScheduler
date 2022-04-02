@@ -7,9 +7,14 @@ import {readableExpressionLabel} from '../quartz-cron/quartz-cron';
 
 import '../quartz-cron/quartz-cron';
 
-import '@vaadin/text-field';
 import '@vaadin/icon';
 import '@vaadin/icons';
+
+import '@vaadin/text-area';
+import '@vaadin/text-field';
+import '@vaadin/integer-field';
+import '@vaadin/password-field';
+
 import '@vaadin/button';
 import '@vaadin/details';
 import '@vaadin/vertical-layout';
@@ -18,7 +23,6 @@ import '@vaadin/checkbox';
 import '@vaadin/date-time-picker';
 import '@vaadin/date-picker';
 import '@vaadin/select';
-import '@vaadin/integer-field';
 import 'vanilla-colorful';
 
 import '@skyra/discord-components-core';
@@ -165,7 +169,9 @@ export class EmbedEditor extends LitElement {
 
                 ${this.buildChoice()}
                 <vaadin-button @click="${(e: any)  => this.$server.somethingHappened(this.message.toJson())}">${(this.sendNow?'Send':'Save')+'(not really)'}</vaadin-button>
-                <a target="_blank" href="${this.message.toDiscohook()}">${'Show in discohook'}</a>
+                <a target="_blank" href="${this.message.toDiscohook()}">
+                    <vaadin-button>Show in discohook</vaadin-button>
+                </a>
             </vaadin-vertical-layout>
             <vaadin-vertical-layout style= "width:100%">
                 ${this.message.toPreview()}
@@ -175,10 +181,10 @@ export class EmbedEditor extends LitElement {
 
 
     buildChoice(){
-        var dateChangeListener = (e: CustomEvent) => {
+        let dateChangeListener = (e: CustomEvent) => {
             if(e.detail.value.length>0)
                 this.sendTime = e.detail.value; //TODO local to utc conversion, check if its server time or client time
-            var picker: DateTimePicker = e.currentTarget as DateTimePicker;
+            let picker: DateTimePicker = e.currentTarget as DateTimePicker;
                 
             picker.i18n.formatDate = (dateParts: DatePickerDate): string => {
                 const { year, month, day } = dateParts;
@@ -255,10 +261,10 @@ export class EmbedEditor extends LitElement {
     }
 
     buildEmbed(embed: ec.Embed){
-        var i = this.message.embeds.indexOf(embed);
-        var name = this.message.embeds[i].body.title;
+        let i = this.message.embeds.indexOf(embed);
+        let name = this.message.embeds[i].body.title;
         return html`
-        <vaadin-horizontal-layout style="align-items: flex-start" class="embed-edit">
+        <vaadin-horizontal-layout style="align-items: flex-start; width: 100%;" class="embed-edit">
             <vaadin-details opened> <!-- embed -->
                 <div slot="summary">
                     Embed ${i+1}${name.length>0?' - '+name:''}
@@ -355,7 +361,7 @@ export class EmbedEditor extends LitElement {
                         <vaadin-button
                             id = "color-button-${i}"
                             @click = "${(e: CustomEvent) => {
-                                var dialog:any = this.shadowRoot!.querySelector(`#color-dialog-${i}`);
+                                let dialog:any = this.shadowRoot!.querySelector(`#color-dialog-${i}`);
                                 dialog.positionTarget = e.currentTarget;
                                 dialog.open();
                             }}"
@@ -430,7 +436,7 @@ export class EmbedEditor extends LitElement {
 
                             @value-changed="${(e: CustomEvent) => {
                                 this.message.embeds[i].footer.timestamp = e.detail.value; //TODO local to utc conversion, check if its server time or client time
-                                var picker: DateTimePicker = e.currentTarget as DateTimePicker;
+                                let picker: DateTimePicker = e.currentTarget as DateTimePicker;
                                 
                                 picker.i18n.formatDate = (dateParts: DatePickerDate): string => {
                                     const { year, month, day } = dateParts;
@@ -471,9 +477,9 @@ export class EmbedEditor extends LitElement {
     }
 
     buildField(i:number, field:ec.Field){
-        var j = this.message.embeds[i].fields.indexOf(field);
-        var name = this.message.embeds[i].fields[j].name;
-        var value = this.message.embeds[i].fields[j].value;
+        let j = this.message.embeds[i].fields.indexOf(field);
+        let name = this.message.embeds[i].fields[j].name;
+        let value = this.message.embeds[i].fields[j].value;
         return html`
             <vaadin-horizontal-layout style="align-items: flex-start" >
                 <vaadin-details opened>

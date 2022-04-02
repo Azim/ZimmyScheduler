@@ -1,0 +1,7 @@
+:host([disabled]) [part='radio'] {
+    color: var(--lumo-disabled-text-color);
+    background-color: rgb(64,68,75);
+}
+[part='radio'], :host(:not([checked]):not([disabled]):hover) [part='radio'] {
+    background-color: rgb(41, 43, 47);
+}

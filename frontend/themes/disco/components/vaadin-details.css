@@ -1,0 +1,9 @@
+:host(:not([disabled])) [part='summary']:hover, :host(:not([disabled])) [part='summary']:hover [part='toggle']{
+    color: var(--lumo-secondary-text-color);
+}
+[part='toggle']{
+    color: var(--lumo-secondary-text-color);
+}
+[part='summary']{
+    user-select: none;
+}

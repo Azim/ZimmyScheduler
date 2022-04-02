@@ -2,6 +2,7 @@ import * as d from './discord-classes';
 import * as validators from './validators';
 import '@skyra/discord-components-core';
 import { html } from 'lit';
+import { ifDefined } from 'lit/directives/if-defined.js';
 
 export class Field{
     name: string = '';
@@ -65,7 +66,7 @@ export class Message{
     }
 
     toDiscohook(){
-        var obj = {
+        let obj = {
             messages: [
                 {
                     data: JSON.parse(this.toJson())
@@ -76,17 +77,6 @@ export class Message{
     }
 
     toPreview(){
-        window.$discordMessage = {
-            profiles: {
-                preview: {
-                    author: this.author.username,
-                    avatar: this.author.avatar_url,
-                    bot: true,
-                    verified: false
-                }
-            }
-        }
-
         return html`
             <discord-messages>
                 <discord-message 
@@ -95,6 +85,9 @@ export class Message{
                 bot>
                     ${this.content}
                     ${this.embeds.map(embed=>{
+                        let descr = embed.body.description.length==0?'margin-top:0':undefined;
+                        let fields = embed.fields.length==0?'margin-top:0':undefined;
+
                         return html`
                             <discord-embed
                                 slot="embeds"
@@ -107,13 +100,15 @@ export class Message{
                                 thumbnail="${embed.thumbnail_url}"
                                 url="${embed.body.url}"
                             >
-                                <discord-embed-description slot="description">
-                                    ${embed.body.description}
+                                <discord-embed-description slot="description" style="${ifDefined(descr)}">
+                                    <div>${embed.body.description}</div>
                                 </discord-embed-description>
-                                <discord-embed-fields slot="fields">
+                                <discord-embed-fields slot="fields" style="${ifDefined(fields)}">
                                     ${embed.fields.map(field=>{
                                         return html`
-                                            <discord-embed-field field-title="${field.name}">${field.value}</discord-embed-field>
+                                            <discord-embed-field ?inline=${field.inline} field-title="${field.name}">
+                                                <div>${field.value}</div>
+                                            </discord-embed-field>
                                         `;
                                     })}
                                 </discord-embed-fields>
@@ -128,14 +123,14 @@ export class Message{
     }
 
     toDiscordFormat(){
-        var res = new d.WebhookMessage();
+        let res = new d.WebhookMessage();
         if(this.content.length>0) res.content = this.content;
         if(this.author.username.length>0) res.username = this.author.username;
         if(this.author.avatar_url.length>0) res.avatar_url = this.author.avatar_url;
         if(this.embeds.length>0){
             res.embeds = [];
             this.embeds.forEach(embed => {
-                var ne: d.Embed = new d.Embed();
+                let ne: d.Embed = new d.Embed();
                 
                 if(embed.body.title.length > 0) ne.title = embed.body.title;
                 if(embed.body.description.length > 0) ne.description = embed.body.description;

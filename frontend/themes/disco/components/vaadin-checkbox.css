@@ -1,0 +1,9 @@
+:host([disabled]) [part='checkbox']::after{
+    color: var(--lumo-disabled-text-color);
+}
+[part='checkbox']{
+    background-color: rgb(41, 43, 47);
+}
+:host([disabled]) [part='checkbox']{
+    background-color: rgb(64,68,75);
+}

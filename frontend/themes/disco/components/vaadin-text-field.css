@@ -1,0 +1,7 @@
+:host(:hover:not([readonly]):not([focused]):not([invalid])) [part='input-field'], [part='input-field'], :host::after {
+    background-color:rgb(41, 43, 47);
+}
+
+:host(:hover:not([readonly]):not([focused])) [part='input-field']::after{
+    opacity: 0;
+}

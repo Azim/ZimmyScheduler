@@ -343,7 +343,7 @@ export class QuartzCron extends LitElement {
             width: 7em;
         }
         .choice-text{
-            padding: let(--lumo-space-xs) let(--lumo-space-s) let(--lumo-space-xs) let(--lumo-space-xs);
+            padding: var(--lumo-space-xs) var(--lumo-space-s) var(--lumo-space-xs) var(--lumo-space-xs);
         }
         .hour-select{
             width: 4.45em;
