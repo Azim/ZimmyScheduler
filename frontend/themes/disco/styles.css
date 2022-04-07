@@ -13,10 +13,17 @@
     --lumo-contrast-5pct:rgb(64,68,75);
     --lumo-base-color:rgb(41, 43, 47);
     --lumo-primary-color:rgb(88, 101, 242);
+    --embed-edit-border-color: var(--lumo-secondary-text-color);
 }
 vaadin-tab {
     font-weight:600;
 }
 vaadin-vertical-layout{
     color:white;
+}
+
+vaadin-details div {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
 }

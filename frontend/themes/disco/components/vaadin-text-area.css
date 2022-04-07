@@ -1,3 +1,7 @@
 :host(:hover:not([readonly]):not([focused]):not([invalid])) [part='input-field'], [part='input-field'] {
     background-color:rgb(41, 43, 47);
 }
+
+:host([has-label]){
+    padding-top: 4px;
+}

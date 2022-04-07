@@ -21,7 +21,8 @@ public class SecurityConfig extends VaadinWebSecurityConfigurerAdapter {
         // Register our CustomRequestCache, which saves unauthorized access attempts, so the user is redirected after login.
         .requestCache().requestCache(new CustomRequestCache())
 
-        .and().authorizeRequests().antMatchers("/oauth2/authorization/discord", "/login/oauth2/callback/**", "/").permitAll().and()
+        //TODO
+        .and().authorizeRequests().antMatchers("/oauth2/authorization/discord", "/login/oauth2/callback/**", "/", "/about").permitAll().and()
         .oauth2Login(oauth -> { oauth.defaultSuccessUrl("/"); }).logout().logoutSuccessUrl("/")
         // Restrict access to our application.
         .and().authorizeRequests()

@@ -1,5 +1,6 @@
 import { css, html, LitElement } from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
+import { ifDefined } from 'lit/directives/if-defined.js';
 import * as ec from './classes';
 import * as fns from 'date-fns';
 import * as validators from './validators';
@@ -50,7 +51,7 @@ export class EmbedEditor extends LitElement {
     private repeatCron:string = '';
     private sendNow:boolean = false;
     
-    private user_expression:string = '0 0 0 ? * * *';
+    public user_expression:string = '0 0 0 ? * * *';
 
     constructor(){
         super();
@@ -207,7 +208,7 @@ export class EmbedEditor extends LitElement {
 
         return html`
             <vaadin-integer-field 
-                class="${this.selectedType=='minutes'?'':'hidden'}"
+                class="${ifDefined(this.selectedType=='minutes'?undefined:'hidden')}"
                 label="X:"
                 value="${this.repeatMinutes}" 
                 min="30" 
@@ -216,7 +217,7 @@ export class EmbedEditor extends LitElement {
                 error-message="At least 30"
             ></vaadin-integer-field>
 
-            <div class="${this.selectedType=='cron'?'':'hidden'}">
+            <div class="${ifDefined(this.selectedType=='cron'?undefined:'hidden')}" style="width:100%;">
                 <vaadin-text-field
                     id="user-cron-input"
                     .value="${this.user_expression}"
@@ -227,7 +228,7 @@ export class EmbedEditor extends LitElement {
                 >
                     ${readableExpressionLabel(this.user_expression)}
                     <div slot="helper">
-                        <a href="https://www.freeformatter.com/cron-expression-generator-quartz.html#cronexpressionexamples">Quartz cron expression</a>
+                        <a target="_blank" href="https://www.freeformatter.com/cron-expression-generator-quartz.html#cronexpressionexamples" style="color: rgb(0, 176, 244);text-decoration: none;">Quartz cron expression</a>
                     </div>
                 </vaadin-text-field> 
                 <quartz-cron
@@ -263,19 +264,31 @@ export class EmbedEditor extends LitElement {
     buildEmbed(embed: ec.Embed){
         let i = this.message.embeds.indexOf(embed);
         let name = this.message.embeds[i].body.title;
+        let color:any = this.message.embeds[i].body.color;
+        if(color.length==0||!validators.isHexColor(color)) color = undefined;
+
         return html`
         <vaadin-horizontal-layout style="align-items: flex-start; width: 100%;" class="embed-edit">
-            <vaadin-details opened> <!-- embed -->
+            <vaadin-details 
+                opened
+                style="--embed-edit-border-color: ${ifDefined(color)};"
+                class="btn-detail"
+            > <!-- embed -->
                 <div slot="summary">
                     Embed ${i+1}${name.length>0?' - '+name:''}
-                    <vaadin-button theme="icon" aria-label="Remove embed" @click = ${()=>{
-                        this.removeEmbed(i);
-                        this.requestUpdate();
-                    }}>
-                    <vaadin-icon icon="vaadin:close-small"></vaadin-icon>
+                    <vaadin-button 
+                        theme="icon" 
+                        aria-label="Remove embed" 
+                        @click = ${()=>{
+                            this.removeEmbed(i);
+                            this.requestUpdate();
+                        }}
+                        style="background: transparent; margin: 0;"
+                    >
+                        <vaadin-icon icon="vaadin:close-small" style="color: var(--lumo-secondary-text-color);"></vaadin-icon>
                     </vaadin-button>
                 </div>
-                <vaadin-details opened> <!-- embed author -->
+                <vaadin-details opened class="first-detail"> <!-- embed author -->
                     <div slot="summary">Author</div>
                     <vaadin-vertical-layout>
                         <vaadin-text-field
@@ -356,6 +369,7 @@ export class EmbedEditor extends LitElement {
                                 }
                                 this.requestUpdate();
                             }}"
+                            clear-button-visible
                         ></vaadin-text-field>
                         
                         <vaadin-button
@@ -366,17 +380,11 @@ export class EmbedEditor extends LitElement {
                                 dialog.open();
                             }}"
                             style = "background-color:${this.message.embeds[i].body.color}; min-width: var(--lumo-button-size);"
-                        > </vaadin-button>
-                        <vaadin-button
-                            theme = "icon"
-                            @click = "${(e: CustomEvent) => {
-                                this.message.embeds[i].body.color = '';
-                                this.requestUpdate();
-                            }}"
-                            style = "background-color:${this.message.embeds[i].body.color}; min-width: var(--lumo-button-size);"
+                            theme="icon"
                         >
-                            <vaadin-icon icon="vaadin:close-small"></vaadin-icon>
+                            <vaadin-icon icon="vaadin:eyedropper" style="padding-left: 0;"></vaadin-icon>
                         </vaadin-button>
+
                         <paper-dialog id="color-dialog-${i}" no-overlap horizontal-align="right" vertical-align="top" style="margin: 0;border-radius: 8px 8px 8px 8px;">
                             <hex-color-picker 
                                 style="margin: 0; padding:0"
@@ -391,7 +399,7 @@ export class EmbedEditor extends LitElement {
                     
                     </vaadin-vertical-layout>
                 </vaadin-details>
-                <vaadin-details opened> <!-- embed fields -->
+                <vaadin-details opened class="first-btn-detail"> <!-- embed fields -->
                     <div slot="summary">Fields</div>
                     <vaadin-vertical-layout>
                         ${this.message.embeds[i].fields.map((field => this.buildField(i, field)))}
@@ -481,39 +489,44 @@ export class EmbedEditor extends LitElement {
         let name = this.message.embeds[i].fields[j].name;
         let value = this.message.embeds[i].fields[j].value;
         return html`
-            <vaadin-horizontal-layout style="align-items: flex-start" >
-                <vaadin-details opened>
+            <vaadin-horizontal-layout style="align-items: flex-start; width:100%;" >
+                <vaadin-details opened class="btn-detail">
                     <div slot="summary">
                         Field ${j+1}${name.length>0?' - '+name:''}
-                        <vaadin-button theme="icon" aria-label="Remove field" @click = ${()=>{
-                            this.removeField(i,j);
-                            this.requestUpdate();
-                        }}>
-                            <vaadin-icon icon="vaadin:close-small"></vaadin-icon>
+                        <vaadin-button 
+                            theme="icon" 
+                            aria-label="Remove field" 
+                            @click = ${()=>{
+                                this.removeField(i,j);
+                                this.requestUpdate();
+                            }}
+                            style="background: transparent; margin: 0;"
+                        >
+                            <vaadin-icon icon="vaadin:close-small" style="color: var(--lumo-secondary-text-color);"></vaadin-icon>
                         </vaadin-button>
                     </div>
                     <vaadin-vertical-layout>
-                        <vaadin-horizontal-layout style="align-items: baseline" >
-                        <vaadin-text-field
-                            label="Field Name ${name.length}/256"
-                            minlength="0"
-                            maxlength="256"
-                            value = "${name}"
-                            @value-changed="${(e: CustomEvent) => {
-                                this.message.embeds[i].fields[j].name = e.detail.value;
-                                this.requestUpdate();
-                            }}"
-                        ></vaadin-text-field>
+                        <vaadin-horizontal-layout style="align-items: baseline; width:100%;" >
+                            <vaadin-text-field
+                                label="Field Name ${name.length}/256"
+                                minlength="0"
+                                maxlength="256"
+                                value = "${name}"
+                                @value-changed="${(e: CustomEvent) => {
+                                    this.message.embeds[i].fields[j].name = e.detail.value;
+                                    this.requestUpdate();
+                                }}"
+                            ></vaadin-text-field>
 
-                        <vaadin-checkbox 
-                            label="Inline" 
-                            value = "${this.message.embeds[i].fields[j].inline}"
-                            @change="${
-                            (e: CustomEvent) => {
-                                this.message.embeds[i].fields[j].inline = !this.message.embeds[i].fields[j].inline;
-                                this.requestUpdate();
-                            }}"
-                        ></vaadin-checkbox>
+                            <vaadin-checkbox 
+                                label="Inline" 
+                                .checked = "${this.message.embeds[i].fields[j].inline}"
+                                @change="${(e: CustomEvent) => {
+                                    this.message.embeds[i].fields[j].inline = !this.message.embeds[i].fields[j].inline;
+                                    this.requestUpdate();
+                                    //TODO fix
+                                }}"
+                            ></vaadin-checkbox>
                         </vaadin-horizontal-layout>
                         <vaadin-text-area
                             label="Field Value ${value.length}/1024"

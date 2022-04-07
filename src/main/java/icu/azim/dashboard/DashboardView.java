@@ -245,8 +245,9 @@ public class DashboardView extends AppLayout{
 		if(!isAuthorized()||currentUser.isEmpty()) return avatar;
 		JsonObject user = currentUser.get();
 		avatar.setName(user.get("username").getAsString()+":"+user.get("discriminator").getAsString());
-		avatar.setImage(String.format("https://cdn.discordapp.com/avatars/%s/%s.png", user.get("id").getAsString(), user.get("avatar").getAsString()));
-		
+		if(user.has("avatar")) {
+			avatar.setImage(String.format("https://cdn.discordapp.com/avatars/%s/%s.png", user.get("id").getAsString(), user.get("avatar").getAsString()));
+		}
 		return avatar;
 	}
 }

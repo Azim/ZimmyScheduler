@@ -1,13 +1,13 @@
 import * as d from './discord-classes';
 import * as validators from './validators';
 import '@skyra/discord-components-core';
-import { html } from 'lit';
+import { css, html } from 'lit';
 import { ifDefined } from 'lit/directives/if-defined.js';
 
 export class Field{
     name: string = '';
     value: string = '';
-    inline?: boolean = false;
+    inline: boolean = false;
 }
 
 export class EmbedAuthor{
@@ -73,10 +73,17 @@ export class Message{
                 }
             ]
         }
-        return 'https://discohook.org/?message='+btoa(JSON.stringify(obj));
+        return 'https://discohook.org/?message='+btoa(unescape(encodeURIComponent(JSON.stringify(obj))));
     }
 
     toPreview(){
+        let c = css`
+        a {
+            color: rgb(0, 176, 244);
+            text-decoration: none;
+        }`;
+
+
         return html`
             <discord-messages>
                 <discord-message 
@@ -85,9 +92,6 @@ export class Message{
                 bot>
                     ${this.content}
                     ${this.embeds.map(embed=>{
-                        let descr = embed.body.description.length==0?'margin-top:0':undefined;
-                        let fields = embed.fields.length==0?'margin-top:0':undefined;
-
                         return html`
                             <discord-embed
                                 slot="embeds"
@@ -100,22 +104,44 @@ export class Message{
                                 thumbnail="${embed.thumbnail_url}"
                                 url="${embed.body.url}"
                             >
-                                <discord-embed-description slot="description" style="${ifDefined(descr)}">
+                                <discord-embed-description 
+                                    slot="description" 
+                                    style="${ifDefined(embed.body.description.length==0?'margin-top:0':undefined)}"
+                                >
                                     <div>${embed.body.description}</div>
                                 </discord-embed-description>
-                                <discord-embed-fields slot="fields" style="${ifDefined(fields)}">
+                                <discord-embed-fields 
+                                    slot="fields" 
+                                    style="${ifDefined(embed.fields.length==0?'margin-top:0':undefined)}"
+                                >
                                     ${embed.fields.map(field=>{
                                         return html`
-                                            <discord-embed-field ?inline=${field.inline} field-title="${field.name}">
+                                            <discord-embed-field ?inline=${field.inline} inline-index="${ifDefined(field.inline?embed.fields.indexOf(field)+1:undefined)}">
+                                                <div class="discord-field-title">${field.name}</div>
                                                 <div>${field.value}</div>
                                             </discord-embed-field>
                                         `;
                                     })}
                                 </discord-embed-fields>
+                                <discord-embed-footer 
+                                    slot="footer" 
+                                    footer-image="${embed.footer.footer_icon_url}" 
+                                    timestamp="${embed.footer.timestamp}"
+                                    style="${ifDefined(embed.footer.footer.length+embed.footer.timestamp.length == 0 ?'margin-top:0':undefined)}"
+                                >
+                                    <div>${embed.footer.footer}</div>
+                                </discord-embed-footer>
                             </discord-embed>
                         `;
                     })}
 
+                    <!--
+                    <discord-attachments slot="components">
+                        <discord-action-row>
+                            <discord-button url="https://discohook.app" emoji="/static/eyes.svg" emoji-name="👀">Link</discord-button>
+                        </discord-action-row>
+                    </discord-attachments>
+                    -->
                 </discord-message>
             </discord-messages>
         `;

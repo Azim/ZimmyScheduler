@@ -58,7 +58,6 @@ interface days extends units{
     x_th_weekday:string;
 };
 
-
 function allowEveryHour(minutes:units){
     if(minutes.selected.length<2) return true;
     return Math.abs(Number(minutes.selected[0]) - Number(minutes.selected[minutes.selected.length-1])) == 30;
@@ -375,6 +374,7 @@ export class QuartzCron extends LitElement {
         return html`
             <vaadin-text-field
                 id="builder-cron-output"
+                style="width: 100%;"
                 .value="${this.expression}"
             readonly>
                 ${readableExpressionLabel(this.expression)}

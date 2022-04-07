@@ -7,3 +7,23 @@
 [part='summary']{
     user-select: none;
 }
+
+:host(.btn-detail) [part='content'], :host(.first-btn-detail) [part='content'], :host(.first-detail) [part='summary']{
+    padding-top: 0;
+}
+
+:host(.btn-detail) [part='summary']{
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+:host([opened]) [part='content']{
+    padding-left: 15px;
+    margin-left: 5px;
+    border-left: 2px solid var(--embed-edit-border-color);
+    padding-bottom: 0;
+    margin-bottom: var(--lumo-space-s);
+}
+:host {
+    margin: 0;
+}
