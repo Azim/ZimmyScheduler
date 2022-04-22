@@ -6,18 +6,25 @@ import com.vaadin.flow.component.ClientCallable;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.dependency.JsModule;
+import com.vaadin.flow.router.PageTitle;
+import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.auth.AnonymousAllowed;
+
+import icu.azim.dashboard.DashboardView;
 
 @Tag("embed-editor")
 @JsModule("./embed-editor/embed-editor.ts")
+@PageTitle("Zimmy dashboard")
+@AnonymousAllowed
+@Route(value = "schedule", layout = DashboardView.class)
 public class EmbedEditor extends Component {
 	private Consumer<String> onDone;
 	
-	public EmbedEditor(Consumer<String> onDone) {
-		this.onDone = onDone;
+	public EmbedEditor() {
+
 	}
 	
-	public EmbedEditor(Consumer<String> onDone, String initialValue) {
-		this.onDone = onDone;
+	public EmbedEditor(String initialValue) {
 		this.getElement().setProperty("json", initialValue);
 	}
 	

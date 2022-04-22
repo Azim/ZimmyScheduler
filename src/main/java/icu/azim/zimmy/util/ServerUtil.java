@@ -134,7 +134,6 @@ public class ServerUtil {
 			}
 			j.set(eid+":server", server+"");
 			
-			j.rpush("e:sendAt:"+date.getTime(), id+"");
 			j.rpush("s:"+server+":planned", id+"");
 			
 			return id;
@@ -150,23 +149,13 @@ public class ServerUtil {
 	public static void removeTask(String id, Jedis j) {
 		String eid = "e:"+id;
 		if(!j.exists(eid+":url"))return;
-		String date = j.get(eid+":date");
 		String server = j.get(eid+":server");
 
 		j.lrem("s:"+server+":planned", 0, id);
-		j.lrem("e:sendAt:"+date, 0, id);
-		if(j.llen("e:sendAt:"+date)<1) {
-			j.del("e:sendAt:"+date);
-		}
 		j.del(eid+":url", eid+":data", eid+":date", eid+":mention", eid+":server", eid+":r:type", eid+":r:pattern");
 	}
 	
 	public static void editTaskDate(String id, Date date, Jedis j) {
-		String sdate = j.getSet("e:"+id+":date", date.getTime()+"");
-		j.lrem("e:sendAt:"+sdate, 0, id);
-		if(j.llen("e:sendAt:"+sdate)<1) {
-			j.del("e:sendAt:"+sdate);
-		}
-		j.rpush("e:sendAt:"+date.getTime(), id);
+		j.set("e:"+id+":date", date.getTime()+"");
 	}
 }

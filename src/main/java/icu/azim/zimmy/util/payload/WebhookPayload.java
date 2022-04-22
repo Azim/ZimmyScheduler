@@ -5,9 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
@@ -24,7 +22,6 @@ import com.google.gson.JsonObject;
 import icu.azim.zimmy.Zimmy;
 import icu.azim.zimmy.util.Util;
 import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
 
 public class WebhookPayload {
 	public String url;
@@ -71,14 +68,6 @@ public class WebhookPayload {
 			payload.json = payload.json.replace("%"+property.getKey()+"%", property.getValue()); //.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")); //TODO maybe some proper ways of doing it sometime
 		}
 		return payload;
-	}
-
-	public static List<WebhookPayload> fromRedisDate(Date date, JedisPool jpool) {
-		try(Jedis j = jpool.getResource()){
-			if(!j.exists("e:sendAt:"+date.getTime())) return new ArrayList<WebhookPayload>();
-			if(j.llen("e:sendAt:"+date.getTime())<1) return new ArrayList<WebhookPayload>();
-			return j.lrange("e:sendAt:"+date.getTime(), 0, -1).stream().map(id->fromRedis(id,j)).collect(Collectors.toList());
-		}
 	}
 	
 	public void fromFile(InputStream inputStream) {

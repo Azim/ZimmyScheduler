@@ -55,6 +55,7 @@ public class SecurityConfig extends VaadinWebSecurityConfigurerAdapter {
             "/icons/**",
             "/images/**",
             "/styles/**",
+            "/error",
 
             // (development mode) H2 debugging console
             "/h2-console/**");

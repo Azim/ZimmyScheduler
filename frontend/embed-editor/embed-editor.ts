@@ -83,6 +83,8 @@ export class EmbedEditor extends LitElement {
             display:flex;
             flex-direction:row;
             align-items:flex-start;
+            box-sizing: border-box;
+            padding: 1em;
         }
         
         .hidden{
@@ -91,12 +93,18 @@ export class EmbedEditor extends LitElement {
 
         .discord-message, .discord-messages, .discord-embed, .discord-embed-wrapper, .discord-embed-grid {
             width:100%;
+            box-sizing: border-box;
         }
         .discord-message {
             padding-right: 0 !important;
         }
         .discord-embed .discord-embed-description{
             white-space: inherit;
+        }
+
+        .d-spoiler {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
         }
 
     `;
@@ -183,27 +191,30 @@ export class EmbedEditor extends LitElement {
 
     buildChoice(){
         let dateChangeListener = (e: CustomEvent) => {
-            if(e.detail.value.length>0)
-                this.sendTime = e.detail.value; //TODO local to utc conversion, check if its server time or client time
-            let picker: DateTimePicker = e.currentTarget as DateTimePicker;
+            if(!e.detail.value){
+                let picker: DateTimePicker = e.currentTarget as DateTimePicker;
                 
-            picker.i18n.formatDate = (dateParts: DatePickerDate): string => {
-                const { year, month, day } = dateParts;
-                const date = new Date(year, month, day);
-                return fns.format(date, 'dd.MM.yyyy');
-            };
-            picker.i18n.parseDate = (inputValue: string): DatePickerDate => {
-                const date = fns.parse(inputValue, 'dd.MM.yyyy', new Date());
-                return { year: date.getFullYear(), month: date.getMonth(), day: date.getDate() };
-            };
-            picker.i18n.formatTime = (dateParts: TimePickerTime): string => {
-                const {hours, minutes, seconds } = dateParts;
-                const pad = (num:string|number, fmt='00') => (fmt+num).substring((fmt+num).length - fmt.length);
-                let timeString = `${pad(hours)}:${pad(minutes)}:${pad(seconds?seconds:0)}`
-                return timeString;
-            };
+                picker.i18n.formatDate = (dateParts: DatePickerDate): string => {
+                    const { year, month, day } = dateParts;
+                    const date = new Date(year, month, day);
+                    return fns.format(date, 'dd.MM.yyyy');
+                };
+                picker.i18n.parseDate = (inputValue: string): DatePickerDate => {
+                    const date = fns.parse(inputValue, 'dd.MM.yyyy', new Date());
+                    return { year: date.getFullYear(), month: date.getMonth(), day: date.getDate() };
+                };
+                picker.i18n.formatTime = (dateParts: TimePickerTime): string => {
+                    const {hours, minutes, seconds } = dateParts;
+                    const pad = (num:string|number, fmt='00') => (fmt+num).substring((fmt+num).length - fmt.length);
+                    let timeString = `${pad(hours)}:${pad(minutes)}:${pad(seconds?seconds:0)}`
+                    return timeString;
+                };
+                this.requestUpdate();
+                return;
+            }
+            let d:Date = new Date(e.detail.value);
+            this.sendTime = d.toISOString(); 
             this.requestUpdate();
-            console.log(e.detail.value);
         };
 
         return html`
@@ -251,8 +262,8 @@ export class EmbedEditor extends LitElement {
                 <vaadin-checkbox 
                     label="Right away"
                     .checked=${this.sendNow}
-                    @change="${(e: CustomEvent) => {
-                        this.sendNow = !this.sendNow;
+                    @checked-changed="${(e: CustomEvent) => {
+                        this.sendNow = e.detail.value;
                         this.requestUpdate();
                     }}"
                 ></vaadin-checkbox>
@@ -273,7 +284,7 @@ export class EmbedEditor extends LitElement {
                 opened
                 style="--embed-edit-border-color: ${ifDefined(color)};"
                 class="btn-detail"
-            > <!-- embed -->
+            >
                 <div slot="summary">
                     Embed ${i+1}${name.length>0?' - '+name:''}
                     <vaadin-button 
@@ -288,7 +299,7 @@ export class EmbedEditor extends LitElement {
                         <vaadin-icon icon="vaadin:close-small" style="color: var(--lumo-secondary-text-color);"></vaadin-icon>
                     </vaadin-button>
                 </div>
-                <vaadin-details opened class="first-detail"> <!-- embed author -->
+                <vaadin-details opened class="first-detail">
                     <div slot="summary">Author</div>
                     <vaadin-vertical-layout>
                         <vaadin-text-field
@@ -323,7 +334,7 @@ export class EmbedEditor extends LitElement {
                         ></vaadin-text-field>
                     </vaadin-vertical-layout>
                 </vaadin-details>
-                <vaadin-details opened> <!-- embed body -->
+                <vaadin-details opened> 
                     <div slot="summary">Body</div>
                     <vaadin-vertical-layout>
                     <vaadin-text-field
@@ -379,8 +390,8 @@ export class EmbedEditor extends LitElement {
                                 dialog.positionTarget = e.currentTarget;
                                 dialog.open();
                             }}"
-                            style = "background-color:${this.message.embeds[i].body.color}; min-width: var(--lumo-button-size);"
-                            theme="icon"
+                            style = "background-color:${validators.isHexColor(this.message.embeds[i].body.color)?this.message.embeds[i].body.color:'rgb(32, 34, 37)'}; min-width: var(--lumo-button-size);"
+                            theme = "icon"
                         >
                             <vaadin-icon icon="vaadin:eyedropper" style="padding-left: 0;"></vaadin-icon>
                         </vaadin-button>
@@ -399,7 +410,7 @@ export class EmbedEditor extends LitElement {
                     
                     </vaadin-vertical-layout>
                 </vaadin-details>
-                <vaadin-details opened class="first-btn-detail"> <!-- embed fields -->
+                <vaadin-details opened class="first-btn-detail">
                     <div slot="summary">Fields</div>
                     <vaadin-vertical-layout>
                         ${this.message.embeds[i].fields.map((field => this.buildField(i, field)))}
@@ -421,9 +432,9 @@ export class EmbedEditor extends LitElement {
                         this.message.embeds[i].image_url = e.detail.value;
                         this.requestUpdate();
                     }}"
-                ><!-- embed image --></vaadin-text-field>
+                ></vaadin-text-field>
 
-                <vaadin-details opened> <!-- embed footer -->
+                <vaadin-details opened>
                     <div slot="summary">Footer</div>
                     <vaadin-vertical-layout>
                         <vaadin-text-area
@@ -439,24 +450,26 @@ export class EmbedEditor extends LitElement {
                         <vaadin-date-time-picker
                             label="Timestamp"
                             date-placeholder="DD.MM.YYYY"
-                            time-placeholder="hh:mm:ss"
+                            time-placeholder="hh:mm"
                             step="60*5"
 
                             @value-changed="${(e: CustomEvent) => {
-                                this.message.embeds[i].footer.timestamp = e.detail.value; //TODO local to utc conversion, check if its server time or client time
-                                let picker: DateTimePicker = e.currentTarget as DateTimePicker;
-                                
-                                picker.i18n.formatDate = (dateParts: DatePickerDate): string => {
-                                    const { year, month, day } = dateParts;
-                                    const date = new Date(year, month, day);
-                                    return fns.format(date, 'dd.MM.yyyy');
-                                };
-                                picker.i18n.parseDate = (inputValue: string): DatePickerDate => {
-                                    const date = fns.parse(inputValue, 'dd.MM.yyyy', new Date());
-                                    return { year: date.getFullYear(), month: date.getMonth(), day: date.getDate() };
-                                };
+                                if(!e.detail.value) {
+                                    let picker: DateTimePicker = e.currentTarget as DateTimePicker;
+                                    picker.i18n.formatDate = (dateParts: DatePickerDate): string => {
+                                        const { year, month, day } = dateParts;
+                                        const date = new Date(year, month, day);
+                                        return fns.format(date, 'dd.MM.yyyy');
+                                    };
+                                    picker.i18n.parseDate = (inputValue: string): DatePickerDate => {
+                                        const date = fns.parse(inputValue, 'dd.MM.yyyy', new Date());
+                                        return { year: date.getFullYear(), month: date.getMonth(), day: date.getDate() };
+                                    };
+                                    return;
+                                }
+                                let d:Date = new Date(e.detail.value);
+                                this.message.embeds[i].footer.timestamp = d.toISOString(); 
                                 this.requestUpdate();
-                                console.log(e.detail.value);
                             }}"
                         ></vaadin-date-time-picker>
                         
@@ -521,10 +534,9 @@ export class EmbedEditor extends LitElement {
                             <vaadin-checkbox 
                                 label="Inline" 
                                 .checked = "${this.message.embeds[i].fields[j].inline}"
-                                @change="${(e: CustomEvent) => {
-                                    this.message.embeds[i].fields[j].inline = !this.message.embeds[i].fields[j].inline;
+                                @checked-changed="${(e: CustomEvent) => {
+                                    this.message.embeds[i].fields[j].inline = e.detail.value;
                                     this.requestUpdate();
-                                    //TODO fix
                                 }}"
                             ></vaadin-checkbox>
                         </vaadin-horizontal-layout>

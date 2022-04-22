@@ -3,6 +3,97 @@ import * as validators from './validators';
 import '@skyra/discord-components-core';
 import { css, html } from 'lit';
 import { ifDefined } from 'lit/directives/if-defined.js';
+import { unsafeHTML } from 'lit/directives/unsafe-html.js';
+import { HTMLOptions, toHTML, rulesEmbed, markdownEngine } from 'discord-markdown';
+import { htmlTag } from 'simple-markdown';
+
+//discord markdown
+const updatedRules = Object.assign({}, rulesEmbed, {
+    discordUser: {
+        order: markdownEngine.defaultRules.strong.order,
+        match: (source: string) => /^<@!?([0-9]*)>/.exec(source),
+        parse: function(capture: any[]) {
+            return {
+                id: capture[1]
+            };
+        },
+        html: function(node: any, output: any, state: any) {
+            return htmlTag('discord-mention', state.discordCallback.user(node), { }, state);
+        }
+    },
+    discordChannel: {
+        order: markdownEngine.defaultRules.strong.order,
+        match: (source: string) => /^<#?([0-9]*)>/.exec(source),
+        parse: function(capture: any[]) {
+            return {
+                id: capture[1]
+            };
+        },
+        html: function(node: any, output: any, state: any) {
+            return htmlTag('discord-mention', state.discordCallback.channel(node), { type: 'channel' }, state);
+        }
+    },
+    discordRole: {
+        order: markdownEngine.defaultRules.strong.order,
+        match: (source: string) => /^<@&([0-9]*)>/.exec(source),
+        parse: function(capture: any[]) {
+            return {
+                id: capture[1]
+            };
+        },
+        html: function(node: any, output: any, state: any) {
+            return htmlTag('discord-mention', state.discordCallback.role(node), { type: 'role' }, state);
+        }
+    },
+    discordEmoji: {
+        order: markdownEngine.defaultRules.strong.order,
+        match: (source: string) => /^<(a?):(\w+):(\d+)>/.exec(source),
+        parse: function(capture: any[]) {
+            return {
+                animated: capture[1] === 'a',
+                name: capture[2],
+                id: capture[3],
+            };
+        },
+        html: function(node: { name: any; id: any; animated: any; }, output: any, state: boolean) {
+            return htmlTag('discord-custom-emoji', '', {
+                name: node.name,
+                url: `https://cdn.discordapp.com/emojis/${node.id}.${node.animated ? 'gif' : 'png'}`
+            }, state);
+        }
+    },
+    discordEveryone: {
+        order: markdownEngine.defaultRules.strong.order,
+        match: (source: string) => /^@everyone/.exec(source),
+        parse: function() {
+            return { };
+        },
+        html: function(node: any, output: any, state: any) {
+            return htmlTag('discord-mention', state.discordCallback.everyone(node), { }, state);
+        }
+    },
+    discordHere: {
+        order: markdownEngine.defaultRules.strong.order,
+        match: (source: string) => /^@here/.exec(source),
+        parse: function() {
+            return { };
+        },
+        html: function(node: any, output: any, state: any) {
+            return htmlTag('discord-mention', state.discordCallback.here(node), {  }, state);
+        }
+    }
+});
+///@ts-ignore
+const parser = markdownEngine.parserFor(updatedRules);
+const out = markdownEngine.outputFor(updatedRules, 'html');
+const discordCallback = {
+    user: (node: any) => 'user',
+    channel: (node: any) => 'channel',
+    role: (node: any) => 'role',
+    everyone: () => 'everyone',
+    here: () => 'here'
+};
+const parseoptions:HTMLOptions = {embed:true, escapeHTML:true, discordCallback:discordCallback};
 
 export class Field{
     name: string = '';
@@ -23,7 +114,6 @@ export class EmbedBody{
     color: string = '';
 }
 
-//TODO add possible undefines everywhere applicable
 export class EmbedFooter{
     footer: string = '';
     timestamp: string = '';
@@ -38,7 +128,6 @@ export class Embed{
     thumbnail_url: string;
     footer: EmbedFooter;
 
-    
     constructor(){
         this.author = new EmbedAuthor();
         this.body = new EmbedBody();
@@ -77,38 +166,35 @@ export class Message{
     }
 
     toPreview(){
-        let c = css`
-        a {
-            color: rgb(0, 176, 244);
-            text-decoration: none;
-        }`;
-
-
+        let getInlineIndex = (embed:Embed, field:Field)=>{
+            let index = embed.fields.indexOf(field);
+            return (index%3)+1;
+        }
         return html`
             <discord-messages>
                 <discord-message 
                     author="${this.author.username.length>0?this.author.username:'Webhook username'}" 
                     avatar="${this.author.avatar_url.length>0?this.author.avatar_url:'https://cdn.discordapp.com/attachments/654503812593090602/665721752277483540/red.png'}" 
                 bot>
-                    ${this.content}
+                    ${unsafeHTML(toHTML(this.content, parseoptions, parser, out))}
                     ${this.embeds.map(embed=>{
                         return html`
                             <discord-embed
                                 slot="embeds"
-                                author-image="${embed.author.author_icon_url}"
-                                author-name="${embed.author.author}"
-                                author-url="${embed.author.author_url}"
+                                author-image="${ifDefined(embed.author.author_icon_url.length==0?undefined:embed.author.author_icon_url)}"
+                                author-name="${ifDefined(embed.author.author.length==0?undefined:embed.author.author)}"
+                                author-url="${ifDefined(embed.author.author_url.length==0?undefined:embed.author.author_url)}"
                                 color="${embed.body.color}"
-                                embed-title="${embed.body.title}"
-                                image="${embed.image_url}"
-                                thumbnail="${embed.thumbnail_url}"
-                                url="${embed.body.url}"
+                                embed-title="${ifDefined(embed.body.title.length==0?undefined:embed.body.title)}"
+                                image="${ifDefined(embed.image_url.length==0?undefined:embed.image_url)}"
+                                thumbnail="${ifDefined(embed.thumbnail_url.length==0?undefined:embed.thumbnail_url)}"
+                                url="${ifDefined(embed.body.url.length==0?undefined:embed.body.url)}"
                             >
                                 <discord-embed-description 
                                     slot="description" 
                                     style="${ifDefined(embed.body.description.length==0?'margin-top:0':undefined)}"
                                 >
-                                    <div>${embed.body.description}</div>
+                                    <div>${unsafeHTML(toHTML(embed.body.description, parseoptions, parser, out))}</div>
                                 </discord-embed-description>
                                 <discord-embed-fields 
                                     slot="fields" 
@@ -116,9 +202,9 @@ export class Message{
                                 >
                                     ${embed.fields.map(field=>{
                                         return html`
-                                            <discord-embed-field ?inline=${field.inline} inline-index="${ifDefined(field.inline?embed.fields.indexOf(field)+1:undefined)}">
-                                                <div class="discord-field-title">${field.name}</div>
-                                                <div>${field.value}</div>
+                                            <discord-embed-field ?inline=${field.inline} inline-index="${getInlineIndex(embed, field)}">
+                                                <div class="discord-field-title">${unsafeHTML(toHTML(field.name, parseoptions, parser, out))}</div>
+                                                <div>${unsafeHTML(toHTML(field.value, parseoptions, parser, out))}</div>
                                             </discord-embed-field>
                                         `;
                                     })}
@@ -129,19 +215,11 @@ export class Message{
                                     timestamp="${embed.footer.timestamp}"
                                     style="${ifDefined(embed.footer.footer.length+embed.footer.timestamp.length == 0 ?'margin-top:0':undefined)}"
                                 >
-                                    <div>${embed.footer.footer}</div>
+                                    <div>${unsafeHTML(toHTML(embed.footer.footer, parseoptions, parser, out))}</div>
                                 </discord-embed-footer>
                             </discord-embed>
                         `;
                     })}
-
-                    <!--
-                    <discord-attachments slot="components">
-                        <discord-action-row>
-                            <discord-button url="https://discohook.app" emoji="/static/eyes.svg" emoji-name="👀">Link</discord-button>
-                        </discord-action-row>
-                    </discord-attachments>
-                    -->
                 </discord-message>
             </discord-messages>
         `;

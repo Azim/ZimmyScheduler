@@ -141,7 +141,7 @@
       "workbox-precaching": "6.4.2",
       "workbox-webpack-plugin": "6.4.2"
     },
-    "hash": "e8f5c8bb9897212d42f5206b755ff3a9e87967c3fdbb1022c63a0acaabe9481d"
+    "hash": "1d1b5d8483d014411d3f9290d82eeb856fd20d0498b945db3dad2f932f2c16c7"
   },
   "dependencies": {
     "@joshoy/quartz-cron-parser": "^0.1.5",
@@ -263,6 +263,7 @@
     "construct-style-sheets-polyfill": "3.0.4",
     "cronstrue": "^2.1.0",
     "date-fns": "^2.23.0",
+    "discord-markdown": "^2.5.1",
     "lit": "2.1.4",
     "vanilla-colorful": "^0.6.2"
   },
@@ -412,6 +413,7 @@
     "@polymer/paper-dialog": "$@polymer/paper-dialog",
     "cronstrue": "$cronstrue",
     "@joshoy/quartz-cron-parser": "$@joshoy/quartz-cron-parser",
-    "@skyra/discord-components-core": "$@skyra/discord-components-core"
+    "@skyra/discord-components-core": "$@skyra/discord-components-core",
+    "discord-markdown": "$discord-markdown"
   }
 }
