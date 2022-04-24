@@ -11,6 +11,7 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 
 import icu.azim.dashboard.DashboardView;
+import icu.azim.dashboard.models.editor.Field;
 
 @Tag("embed-editor")
 @JsModule("./embed-editor/embed-editor.ts")
@@ -31,5 +32,10 @@ public class EmbedEditor extends Component {
 	@ClientCallable
 	public void somethingHappened(String json) {
 		onDone.accept(json);
+	}
+
+	@ClientCallable
+	public void consumeField(Field field){
+		System.out.println(field.getName());
 	}
 }
