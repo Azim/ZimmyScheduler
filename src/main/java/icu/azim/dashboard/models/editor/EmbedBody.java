@@ -1,5 +1,6 @@
 package icu.azim.dashboard.models.editor;
 
+import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
 public class EmbedBody {
@@ -7,7 +8,11 @@ public class EmbedBody {
     private String title;
     @Size(max=4096)
     private String description;
+    //TODO messages for everyone and anyone
+    @Pattern(regexp = "/^(?:https?:\\/\\/|[%{]).*", message = "Invalid url")
     private String url;
+    //TODO
+    @Pattern(regexp = "/^#(?:[0-9a-fA-F]{3}){1,2}$/")
     @Size(max=7)
     private String color;
 

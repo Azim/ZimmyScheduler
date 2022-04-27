@@ -88,6 +88,7 @@
 		<dependency>
 			<groupId>dev.hilla</groupId>
 			<artifactId>hilla</artifactId>
+			<version>1.0.6</version>
 		</dependency>
 		<dependency>
 			<groupId>com.vaadin</groupId>

@@ -1,11 +1,14 @@
 package icu.azim.dashboard.models.editor;
 
+import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
 public class EmbedFooter {
     @Size(max=2048)
     private String footer;
+    //TODO date?
     private String timestamp;
+    @Pattern(regexp = "/^(?:https?:\\/\\/|[%{]).*", message = "Invalid url")
     private String footerIconUrl;
 
     public String getFooter() {

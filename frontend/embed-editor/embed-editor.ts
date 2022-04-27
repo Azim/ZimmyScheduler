@@ -37,7 +37,13 @@ import { TimePickerTime } from '@vaadin/time-picker/src/vaadin-time-picker';
 import { EditorEndpoint } from 'Frontend/generated/endpoints';
 import MessageModel from 'Frontend/generated/icu/azim/dashboard/models/editor/MessageModel';
 import { Binder, field } from '@hilla/form';
+import { repeat } from 'lit/directives/repeat.js';
 import Message from 'Frontend/generated/icu/azim/dashboard/models/editor/Message';
+import { BinderNode } from '@hilla/form/BinderNode';
+import Embed from 'Frontend/generated/icu/azim/dashboard/models/editor/Embed';
+import EmbedModel from 'Frontend/generated/icu/azim/dashboard/models/editor/EmbedModel';
+import Field from '../generated/icu/azim/dashboard/models/editor/Field';
+import FieldModel from '../generated/icu/azim/dashboard/models/editor/FieldModel';
 
 @customElement('embed-editor')
 export class EmbedEditor extends LitElement {
@@ -48,14 +54,14 @@ export class EmbedEditor extends LitElement {
         MessageModel, 
         {
             onChange: ()=>{
-
+                this.requestUpdate();
             },
             onSubmit: EditorEndpoint.submitMessage
         }
     );
 
 
-    private message: ec.Message = new ec.Message();
+    //private message: ec.Message = new ec.Message();
 
     private webhook:string = '';
     private sendTime:string = '';
@@ -123,50 +129,38 @@ export class EmbedEditor extends LitElement {
     `;
 
     render() {
+        let embeds = this.binder.for(this.binder.model.embeds);
+        if(!embeds.value) embeds.value = [];
         return html`
             <vaadin-vertical-layout style= "width:100%"> 
                 <vaadin-text-area
-                    label="Content ${this.message.content.length}/2000"
+                    label="Content ${this.binder.for(this.binder.model.content).value?.length??0}/2000"
                     minlength="0"
                     maxlength="2000"
-                    value = "${this.message.content}"
-                    @value-changed="${(e: CustomEvent) => {
-                        this.message.content = e.detail.value;
-                        this.requestUpdate();
-                    }}"
+                    ${field(this.binder.model.content)}
                 ></vaadin-text-area>
                 <vaadin-details opened> <!-- message author -->
                     <div slot="summary">Profile</div>
                         <vaadin-vertical-layout>
                         <vaadin-text-field
-                            label="Username ${this.message.author.username.length}/80"
+                            label="Username ${this.binder.for(this.binder.model.author.username).value?.length??0}/80"
                             minlength="0"
                             maxlength="80"
-                            value = "${this.message.author.username}"
-                            @value-changed="${(e: CustomEvent) => {
-                                this.message.author.username = e.detail.value;
-                                this.requestUpdate();
-                            }}"
+                            ${field(this.binder.model.author.username)}
                         ></vaadin-text-field>
                         <vaadin-text-field
                             label="Avatar URL"
                             minlength="0"
-                            pattern="^(?:https?:\/\/|[%{]).*"
-                            value = "${this.message.author.avatar_url}"
-                            @value-changed="${(e: CustomEvent) => {
-                                this.message.author.avatar_url = e.detail.value;
-                                this.requestUpdate();
-                            }}"
                             error-message="Invalid url format"
+                            ${field(this.binder.model.author.avatarUrl)}
                         ></vaadin-text-field>
                     </vaadin-vertical-layout>
                 </vaadin-details>
 
-                ${this.message.embeds.map((embed => this.buildEmbed(embed)))}
+                ${repeat(this.binder.model.embeds, b => this.buildEmbed(b))}
 
                 <vaadin-button @click="${(e: any)  => {
-                    this.message.embeds.push(new ec.Embed());
-                    this.requestUpdate();
+                    this.binder.for(this.binder.model.embeds).appendItem();
                 }}">Add embed</vaadin-button>
                 
                 <vaadin-password-field 
@@ -190,17 +184,25 @@ export class EmbedEditor extends LitElement {
                 ></vaadin-select>
 
                 ${this.buildChoice()}
-                <vaadin-button @click="${(e: any)  => {
-                    EditorEndpoint.test();
-                    //this.$server.somethingHappened(this.message.toJson());
-                }
-                }">${(this.sendNow?'Send':'Save')+'(not really)'}</vaadin-button>
-                <a target="_blank" href="${this.message.toDiscohook()}">
+                <vaadin-button 
+                    ?disabled="${this.binder.invalid || this.binder.submitting}"
+                    @click="${(e: any)  => {
+                        //EditorEndpoint.test();
+                        //this.$server.somethingHappened(this.message.toJson());
+                        this.binder.submit();
+                    }
+                }">
+                    ${(this.sendNow?'Send':'Save')+'(not really)'}
+                </vaadin-button>
+                <a target="_blank" href="${
+                    //this.message.toDiscohook()
+                    ''
+                }">
                     <vaadin-button>Show in discohook</vaadin-button>
                 </a>
             </vaadin-vertical-layout>
             <vaadin-vertical-layout style= "width:100%">
-                ${this.message.toPreview()}
+                <!--{this.message.toPreview()}-->
             </vaadin-vertical-layout>
         `;
     }
@@ -289,11 +291,17 @@ export class EmbedEditor extends LitElement {
         
     }
 
-    buildEmbed(embed: ec.Embed){
-        let i = this.message.embeds.indexOf(embed);
-        let name = this.message.embeds[i].body.title;
-        let color:any = this.message.embeds[i].body.color;
-        if(color.length==0||!validators.isHexColor(color)) color = undefined;
+    buildEmbed(embedBinder: BinderNode<Embed, EmbedModel<Embed>>) {
+        let embeds = this.binder.for(this.binder.model.embeds).value;
+        let e = embedBinder.value;
+        let i = embeds && e ? embeds.indexOf(e) : -1;
+        if(i<0) throw new Error('Embed not found');
+        let name = embedBinder.value?.body?.title??'';
+        let color = embedBinder.value?.body?.color;
+        if(!validators.isHexColor(color??'')) color = undefined;
+
+        let fields = embedBinder.for(embedBinder.model.fields);
+        if(!fields.value) fields.value = [];
 
         return html`
         <vaadin-horizontal-layout style="align-items: flex-start; width: 100%;" class="embed-edit">
@@ -307,10 +315,7 @@ export class EmbedEditor extends LitElement {
                     <vaadin-button 
                         theme="icon" 
                         aria-label="Remove embed" 
-                        @click = ${()=>{
-                            this.removeEmbed(i);
-                            this.requestUpdate();
-                        }}
+                        @click = ${()=> embedBinder.removeSelf()}
                         style="background: transparent; margin: 0;"
                     >
                         <vaadin-icon icon="vaadin:close-small" style="color: var(--lumo-secondary-text-color);"></vaadin-icon>
@@ -320,121 +325,83 @@ export class EmbedEditor extends LitElement {
                     <div slot="summary">Author</div>
                     <vaadin-vertical-layout>
                         <vaadin-text-field
-                            label="Author ${this.message.embeds[i].author.author.length}/256"
+                            label="Author ${embedBinder.for(embedBinder.model.author.author).value?.length??0}/256"
                             minlength="0"
                             maxlength="256"
-                            value = "${this.message.embeds[i].author.author}"
-                            @value-changed="${(e: CustomEvent) => {
-                                this.message.embeds[i].author.author = e.detail.value;
-                                this.requestUpdate();
-                            }}"
+                            ${field(embedBinder.model.author.author)}
                         ></vaadin-text-field>
                         <vaadin-text-field
                             label="Author URL"
                             minlength="0"
-                            pattern="^(?:https?:\/\/|[%{]).*"
-                            value = "${this.message.embeds[i].author.author_url}"
-                            @value-changed="${(e: CustomEvent) => {
-                                this.message.embeds[i].author.author_url = e.detail.value;
-                                this.requestUpdate();
-                            }}"
+                            ${field(embedBinder.model.author.authorUrl)}
                         ></vaadin-text-field>
                         <vaadin-text-field
                             label="Author Icon URL"
                             minlength="0"
-                            pattern="^(?:https?:\/\/|[%{]).*"
-                            value = "${this.message.embeds[i].author.author_icon_url}"
-                            @value-changed="${(e: CustomEvent) => {
-                                this.message.embeds[i].author.author_icon_url = e.detail.value;
-                                this.requestUpdate();
-                            }}"
+                            ${field(embedBinder.model.author.authorIconUrl)}
                         ></vaadin-text-field>
                     </vaadin-vertical-layout>
                 </vaadin-details>
                 <vaadin-details opened> 
                     <div slot="summary">Body</div>
                     <vaadin-vertical-layout>
-                    <vaadin-text-field
-                        label="Title ${name.length}/256"
-                        minlength="0"
-                        maxlength="256"
-                        value = "${name}"
-                        @value-changed="${(e: CustomEvent) => {
-                            this.message.embeds[i].body.title = e.detail.value;
-                            this.requestUpdate();
-                        }}"
-                    ></vaadin-text-field>
-                    <vaadin-text-area
-                        label="Description ${this.message.embeds[i].body.description.length}/4096"
-                        minlength="0"
-                        maxlength="4096"
-                        value = "${this.message.embeds[i].body.description}"
-                        @value-changed="${(e: CustomEvent) => {
-                            this.message.embeds[i].body.description = e.detail.value;
-                            this.requestUpdate();
-                        }}"
-                    ></vaadin-text-area>
-                    <vaadin-text-field
-                        label="URL"
-                        minlength="0"
-                        pattern="^(?:https?:\/\/|[%{]).*"
-                        value = "${this.message.embeds[i].body.url}"
-                        @value-changed="${(e: CustomEvent) => {
-                            this.message.embeds[i].body.url = e.detail.value;
-                            this.requestUpdate();
-                        }}"
-                    ></vaadin-text-field>
-                    <vaadin-horizontal-layout style="align-items: baseline" >
                         <vaadin-text-field
-                            label="Color"
+                            label="Title ${name.length}/256"
                             minlength="0"
-                            maxlength="7"
-                            placeholder="#rrggbb"
-                            value = "${this.message.embeds[i].body.color}"
-                            @value-changed="${(e: CustomEvent) => {
-                                if(validators.isHexColor(e.detail.value)||e.detail.value.length==0){
-                                    this.message.embeds[i].body.color = e.detail.value;
-                                }
-                                this.requestUpdate();
-                            }}"
-                            clear-button-visible
+                            maxlength="256"
+                            ${field(embedBinder.model.body.title)}
                         ></vaadin-text-field>
-                        
-                        <vaadin-button
-                            id = "color-button-${i}"
-                            @click = "${(e: CustomEvent) => {
-                                let dialog:any = this.shadowRoot!.querySelector(`#color-dialog-${i}`);
-                                dialog.positionTarget = e.currentTarget;
-                                dialog.open();
-                            }}"
-                            style = "background-color:${validators.isHexColor(this.message.embeds[i].body.color)?this.message.embeds[i].body.color:'rgb(32, 34, 37)'}; min-width: var(--lumo-button-size);"
-                            theme = "icon"
-                        >
-                            <vaadin-icon icon="vaadin:eyedropper" style="padding-left: 0;"></vaadin-icon>
-                        </vaadin-button>
-
-                        <paper-dialog id="color-dialog-${i}" no-overlap horizontal-align="right" vertical-align="top" style="margin: 0;border-radius: 8px 8px 8px 8px;">
-                            <hex-color-picker 
-                                style="margin: 0; padding:0"
-                                color="${this.message.embeds[i].body.color}" 
-                                @color-changed="${(e: CustomEvent) => {
-                                    this.applyColor(i,e.detail.value);
+                        <vaadin-text-area
+                            label="Description ${embedBinder.for(embedBinder.model.body.description).value?.length??0}/4096"
+                            minlength="0"
+                            maxlength="4096"
+                            ${field(embedBinder.model.body.description)}
+                        ></vaadin-text-area>
+                        <vaadin-text-field
+                            label="URL"
+                            minlength="0"
+                            ${field(embedBinder.model.body.url)}
+                        ></vaadin-text-field>
+                        <vaadin-horizontal-layout style="align-items: baseline" >
+                            <vaadin-text-field
+                                label="Color"
+                                minlength="0"
+                                maxlength="7"
+                                placeholder="#rrggbb"
+                                ${field(embedBinder.model.body.color)}
+                                clear-button-visible
+                            ></vaadin-text-field>
+                            <vaadin-button
+                                id = "color-button-${i}"
+                                @click = "${(e: CustomEvent) => {
+                                    let dialog:any = this.shadowRoot!.querySelector(`#color-dialog-${i}`);
+                                    dialog.positionTarget = e.currentTarget;
+                                    dialog.open();
                                 }}"
-                            ></hex-color-picker>
-                        </paper-dialog>
-
-                    </vaadin-horizontal-layout>
-                    
+                                style = "background-color:${color??'rgb(32, 34, 37)'}; min-width: var(--lumo-button-size);"
+                                theme = "icon"
+                            >
+                                <vaadin-icon icon="vaadin:eyedropper" style="padding-left: 0;"></vaadin-icon>
+                            </vaadin-button>
+                            <paper-dialog id="color-dialog-${i}" no-overlap horizontal-align="right" vertical-align="top" style="margin: 0;border-radius: 8px 8px 8px 8px;">
+                                <hex-color-picker 
+                                    style="margin: 0; padding:0"
+                                    color="${color??'#rrggbb'}" 
+                                    @color-changed="${(e: CustomEvent) => {
+                                        embedBinder.for(embedBinder.model.body.color).value = e.detail.value;
+                                    }}"
+                                ></hex-color-picker>
+                            </paper-dialog>
+                        </vaadin-horizontal-layout>
                     </vaadin-vertical-layout>
                 </vaadin-details>
                 <vaadin-details opened class="first-btn-detail">
                     <div slot="summary">Fields</div>
                     <vaadin-vertical-layout>
-                        ${this.message.embeds[i].fields.map((field => this.buildField(i, field)))}
-                        ${this.message.embeds[i].fields.length<25?
+                        ${repeat(embedBinder.model.fields, f => this.buildField(embedBinder, f))}
+                        ${embeds?.length??0<25?
                             html`<vaadin-button @click="${(e: any)  => {
-                                this.message.embeds[i].fields.push(new ec.Field())
-                                this.requestUpdate();
+                                embedBinder.for(embedBinder.model.fields).appendItem();
                             }}">Add Field</vaadin-button>`
                             : html``
                         }
@@ -443,32 +410,23 @@ export class EmbedEditor extends LitElement {
                 <vaadin-text-field
                     label="Image URL"
                     minlength="0"
-                    pattern="^(?:https?:\/\/|[%{]).*"
-                    value = "${this.message.embeds[i].image_url}"
-                    @value-changed="${(e: CustomEvent) => {
-                        this.message.embeds[i].image_url = e.detail.value;
-                        this.requestUpdate();
-                    }}"
+                    ${field(embedBinder.model.imageUrl)}
                 ></vaadin-text-field>
 
                 <vaadin-details opened>
                     <div slot="summary">Footer</div>
                     <vaadin-vertical-layout>
                         <vaadin-text-area
-                            label="Footer ${this.message.embeds[i].footer.footer.length}/2048"
+                            label="Footer ${embedBinder.for(embedBinder.model.footer.footer).value?.length??0}/2048"
                             minlength="0"
                             maxlength="2048"
-                            value = "${this.message.embeds[i].footer.footer}"
-                            @value-changed="${(e: CustomEvent) => {
-                                this.message.embeds[i].footer.footer = e.detail.value;
-                                this.requestUpdate();
-                            }}"
+                            ${field(embedBinder.model.footer.footer)}
                         ></vaadin-text-area>
                         <vaadin-date-time-picker
                             label="Timestamp"
                             date-placeholder="DD.MM.YYYY"
                             time-placeholder="hh:mm"
-                            step="60*5"
+                            step="${60*5}"
 
                             @value-changed="${(e: CustomEvent) => {
                                 if(!e.detail.value) {
@@ -484,8 +442,9 @@ export class EmbedEditor extends LitElement {
                                     };
                                     return;
                                 }
-                                let d:Date = new Date(e.detail.value);
-                                this.message.embeds[i].footer.timestamp = d.toISOString(); 
+                                //TODO type?
+                                //let d:Date = new Date(e.detail.value);
+                                //this.message.embeds[i].footer.timestamp = d.toISOString(); 
                                 this.requestUpdate();
                             }}"
                         ></vaadin-date-time-picker>
@@ -493,12 +452,7 @@ export class EmbedEditor extends LitElement {
                         <vaadin-text-field
                             label="Footer Icon URL"
                             minlength="0"
-                            pattern="^(?:https?:\/\/|[%{]).*"
-                            value = "${this.message.embeds[i].footer.footer_icon_url}"
-                            @value-changed="${(e: CustomEvent) => {
-                                this.message.embeds[i].footer.footer_icon_url = e.detail.value;
-                                this.requestUpdate();
-                            }}"
+                            ${field(embedBinder.model.footer.footerIconUrl)}
                         ></vaadin-text-field>
                     </vaadin-vertical-layout>
                 </vaadin-details>
@@ -507,17 +461,18 @@ export class EmbedEditor extends LitElement {
         </vaadin-horizontal-layout>
         `;
     }
+    buildField(embedBinder: BinderNode<Embed, EmbedModel<Embed>>, fieldBinder: BinderNode<Field, FieldModel<Field>>) {
+        
+        console.log("field start");
+        let fields = embedBinder.for(embedBinder.model.fields).value;
+        let f = fieldBinder.value;
+        let j = fields && f ? fields.indexOf(f) : -1;
+        if(j<0) throw new Error('Field not found');
 
-    applyColor(i:number, color:any){
-        if(color.length<7) return; //not sure how but on init it gives #000 :concern:
-        this.message.embeds[i].body.color = color;
-        this.requestUpdate();
-    }
+        let name = fieldBinder.value?.name??'';
+        let value = fieldBinder.value?.value??'';
+        console.log("field end");
 
-    buildField(i:number, field:ec.Field){
-        let j = this.message.embeds[i].fields.indexOf(field);
-        let name = this.message.embeds[i].fields[j].name;
-        let value = this.message.embeds[i].fields[j].value;
         return html`
             <vaadin-horizontal-layout style="align-items: flex-start; width:100%;" >
                 <vaadin-details opened class="btn-detail">
@@ -527,8 +482,7 @@ export class EmbedEditor extends LitElement {
                             theme="icon" 
                             aria-label="Remove field" 
                             @click = ${()=>{
-                                this.removeField(i,j);
-                                this.requestUpdate();
+                                fieldBinder.removeSelf();
                             }}
                             style="background: transparent; margin: 0;"
                         >
@@ -541,42 +495,23 @@ export class EmbedEditor extends LitElement {
                                 label="Field Name ${name.length}/256"
                                 minlength="0"
                                 maxlength="256"
-                                value = "${name}"
-                                @value-changed="${(e: CustomEvent) => {
-                                    this.message.embeds[i].fields[j].name = e.detail.value;
-                                    this.requestUpdate();
-                                }}"
+                            ${field(fieldBinder.model.name)}
                             ></vaadin-text-field>
 
                             <vaadin-checkbox 
                                 label="Inline" 
-                                .checked = "${this.message.embeds[i].fields[j].inline}"
-                                @checked-changed="${(e: CustomEvent) => {
-                                    this.message.embeds[i].fields[j].inline = e.detail.value;
-                                    this.requestUpdate();
-                                }}"
+                                ${field(fieldBinder.model.inline)}
                             ></vaadin-checkbox>
                         </vaadin-horizontal-layout>
                         <vaadin-text-area
                             label="Field Value ${value.length}/1024"
                             minlength="0"
                             maxlength="1024"
-                            value = "${value}"
-                            @value-changed="${(e: CustomEvent) => {
-                                this.message.embeds[i].fields[j].value = e.detail.value;
-                                this.requestUpdate();
-                            }}"
+                            ${field(fieldBinder.model.value)}
                         ></vaadin-text-area>
                     </vaadin-vertical-layout>
                 </vaadin-details>
             </vaadin-horizontal-layout>
         `;
-    }
-
-    removeEmbed(id: number){
-        this.message.embeds.splice(id,1);
-    }
-    removeField(i: number,j: number){
-        this.message.embeds[i].fields.splice(j,1);
     }
 }

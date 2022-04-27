@@ -1,12 +1,16 @@
 package icu.azim.dashboard.models.editor;
 
+import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
 public class EmbedAuthor {
     @Size(max=256)
     private String author;
-    //TODO add url validation
+    //TODO test url validation
+    @Pattern(regexp = "^(?:https?:\\/\\/|[%{]).*")
     private String authorUrl;
+
+    @Pattern(regexp = "^(?:https?:\\/\\/|[%{]).*")
     private String authorIconUrl;
 
     public String getAuthor() {
