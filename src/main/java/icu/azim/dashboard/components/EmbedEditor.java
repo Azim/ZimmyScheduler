@@ -31,7 +31,7 @@ public class EmbedEditor extends Component {
 	
 	@ClientCallable
 	public void somethingHappened(String json) {
-		onDone.accept(json);
+		//onDone.accept(json);
 	}
 
 	@ClientCallable

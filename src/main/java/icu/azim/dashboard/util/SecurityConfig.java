@@ -22,7 +22,7 @@ public class SecurityConfig extends VaadinWebSecurityConfigurerAdapter {
         .requestCache().requestCache(new CustomRequestCache())
 
         //TODO
-        .and().authorizeRequests().antMatchers("/oauth2/authorization/discord", "/login/oauth2/callback/**", "/", "/about").permitAll().and()
+        .and().authorizeRequests().antMatchers("/oauth2/authorization/discord", "/login/oauth2/callback/**", "/", "/about", "/schedule", "/connect/EditorEndpoint/**").permitAll().and()
         .oauth2Login(oauth -> { oauth.defaultSuccessUrl("/"); }).logout().logoutSuccessUrl("/")
         // Restrict access to our application.
         .and().authorizeRequests()
@@ -36,7 +36,7 @@ public class SecurityConfig extends VaadinWebSecurityConfigurerAdapter {
 
     @Override
     public void configure(WebSecurity web) {
-        web.ignoring().antMatchers(
+        web.debug(false).ignoring().antMatchers(
             // Client-side JS
             "/VAADIN/**",
 

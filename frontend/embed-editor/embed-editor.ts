@@ -32,15 +32,28 @@ import { defineCustomElements } from "@skyra/discord-components-core/loader";
 import '@polymer/paper-dialog';
 import { DateTimePicker } from '@vaadin/date-time-picker';
 import { DatePickerDate } from '@vaadin/date-picker';
-import { TextField } from '@vaadin/text-field';
-import { Checkbox } from '@vaadin/checkbox';
 import { TimePickerTime } from '@vaadin/time-picker/src/vaadin-time-picker';
 
+import { EditorEndpoint } from 'Frontend/generated/endpoints';
+import MessageModel from 'Frontend/generated/icu/azim/dashboard/models/editor/MessageModel';
+import { Binder, field } from '@hilla/form';
+import Message from 'Frontend/generated/icu/azim/dashboard/models/editor/Message';
 
 @customElement('embed-editor')
 export class EmbedEditor extends LitElement {
     
     private $server?: any;
+    private binder = new Binder(
+        this, 
+        MessageModel, 
+        {
+            onChange: ()=>{
+
+            },
+            onSubmit: EditorEndpoint.submitMessage
+        }
+    );
+
 
     private message: ec.Message = new ec.Message();
 
@@ -177,7 +190,11 @@ export class EmbedEditor extends LitElement {
                 ></vaadin-select>
 
                 ${this.buildChoice()}
-                <vaadin-button @click="${(e: any)  => this.$server.somethingHappened(this.message.toJson())}">${(this.sendNow?'Send':'Save')+'(not really)'}</vaadin-button>
+                <vaadin-button @click="${(e: any)  => {
+                    EditorEndpoint.test();
+                    //this.$server.somethingHappened(this.message.toJson());
+                }
+                }">${(this.sendNow?'Send':'Save')+'(not really)'}</vaadin-button>
                 <a target="_blank" href="${this.message.toDiscohook()}">
                     <vaadin-button>Show in discohook</vaadin-button>
                 </a>

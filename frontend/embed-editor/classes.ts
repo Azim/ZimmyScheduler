@@ -7,8 +7,6 @@ import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { HTMLOptions, toHTML, rulesEmbed, markdownEngine } from 'discord-markdown';
 import { htmlTag } from 'simple-markdown';
 
-import FieldModel from 'Frontend/generated/icu/azim/dashboard/models/editor/FieldModel';
-
 //discord markdown
 const updatedRules = Object.assign({}, rulesEmbed, {
     discordUser: {

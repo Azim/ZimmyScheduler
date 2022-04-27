@@ -19,3 +19,8 @@ spring:
             tokenUri: https://discordapp.com/api/oauth2/token
             userInfoUri: https://discordapp.com/api/users/@me
             usernameAttribute: username
+logging:
+  level:
+    org:
+      springframework:
+        security: OFF

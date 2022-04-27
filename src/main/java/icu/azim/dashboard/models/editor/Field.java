@@ -2,10 +2,13 @@ package icu.azim.dashboard.models.editor;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 public class Field {
+	@Size(max=256)
 	@NotEmpty(message = "Cannot be empty")
 	private String name;
+	@Size(max=1024)
 	@NotEmpty(message = "Cannot be empty")
 	private String value;
 	@NotNull
