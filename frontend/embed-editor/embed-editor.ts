@@ -56,7 +56,7 @@ export class EmbedEditor extends LitElement {
             onChange: ()=>{
                 this.requestUpdate();
             },
-            onSubmit: EditorEndpoint.submitMessage
+            onSubmit: EditorEndpoint.submitMessage //TODO try to send from client if applicable
         }
     );
 
@@ -97,14 +97,6 @@ export class EmbedEditor extends LitElement {
             width:100%;
         }
         
-        :host{
-            width:100%;
-            display:flex;
-            flex-direction:row;
-            align-items:flex-start;
-            box-sizing: border-box;
-            padding: 1em;
-        }
         
         .hidden{
             display: none;
@@ -126,13 +118,32 @@ export class EmbedEditor extends LitElement {
             border-radius: 3px;
         }
 
+        :host{
+            /* general styles thing */
+            width:100%;
+            display:flex;
+            flex-direction:row;
+            align-items:flex-start;
+            box-sizing: border-box;
+
+            /* scroll */
+            max-height: calc(100%);
+            height: calc(100%);
+            overflow: hidden;
+        }
+
+        .scroller {
+            overflow-y: scroll;
+            box-sizing: border-box;
+            height: 100%;
+            padding: 1em;
+        }
+
     `;
 
     render() {
-        let embeds = this.binder.for(this.binder.model.embeds);
-        if(!embeds.value) embeds.value = [];
         return html`
-            <vaadin-vertical-layout style= "width:100%"> 
+            <vaadin-vertical-layout style= "width:100%;" class="scroller"> 
                 <vaadin-text-area
                     label="Content ${this.binder.for(this.binder.model.content).value?.length??0}/2000"
                     minlength="0"
@@ -195,14 +206,14 @@ export class EmbedEditor extends LitElement {
                     ${(this.sendNow?'Send':'Save')+'(not really)'}
                 </vaadin-button>
                 <a target="_blank" href="${
-                    //this.message.toDiscohook()
+                    //this.message.toDiscohook() //TODO
                     ''
                 }">
                     <vaadin-button>Show in discohook</vaadin-button>
                 </a>
             </vaadin-vertical-layout>
-            <vaadin-vertical-layout style= "width:100%">
-                <!--{this.message.toPreview()}-->
+            <vaadin-vertical-layout style= "width:100%;" class="scroller">
+                <!--TODO {this.message.toPreview()} -->
             </vaadin-vertical-layout>
         `;
     }
@@ -299,9 +310,6 @@ export class EmbedEditor extends LitElement {
         let name = embedBinder.value?.body?.title??'';
         let color = embedBinder.value?.body?.color;
         if(!validators.isHexColor(color??'')) color = undefined;
-
-        let fields = embedBinder.for(embedBinder.model.fields);
-        if(!fields.value) fields.value = [];
 
         return html`
         <vaadin-horizontal-layout style="align-items: flex-start; width: 100%;" class="embed-edit">
@@ -462,8 +470,6 @@ export class EmbedEditor extends LitElement {
         `;
     }
     buildField(embedBinder: BinderNode<Embed, EmbedModel<Embed>>, fieldBinder: BinderNode<Field, FieldModel<Field>>) {
-        
-        console.log("field start");
         let fields = embedBinder.for(embedBinder.model.fields).value;
         let f = fieldBinder.value;
         let j = fields && f ? fields.indexOf(f) : -1;
@@ -471,7 +477,6 @@ export class EmbedEditor extends LitElement {
 
         let name = fieldBinder.value?.name??'';
         let value = fieldBinder.value?.value??'';
-        console.log("field end");
 
         return html`
             <vaadin-horizontal-layout style="align-items: flex-start; width:100%;" >

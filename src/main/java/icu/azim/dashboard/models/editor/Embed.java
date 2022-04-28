@@ -1,10 +1,14 @@
 package icu.azim.dashboard.models.editor;
 
+import dev.hilla.Nonnull;
+
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
 public class Embed {
     private EmbedAuthor author;
     private EmbedBody body;
+    @Nonnull
     private Field[] fields;
     @Pattern(regexp = "/^(?:https?:\\/\\/|[%{]).*", message = "Invalid url")
     private String imageUrl;
