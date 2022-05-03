@@ -143,7 +143,7 @@
       "workbox-precaching": "6.4.2",
       "workbox-webpack-plugin": "6.4.2"
     },
-    "hash": "a31c4b4bff80e6d1d04c562bc04d6fab8860fb6259d035fb730d09238577f254"
+    "hash": "c0b4578f2c469a056089de1b79231a6640d8e721ffecf48406e1f8e930547ee9"
   },
   "dependencies": {
     "@hilla/form": "0.0.18",
@@ -288,6 +288,7 @@
     "html-webpack-plugin": "4.5.1",
     "lit-css-loader": "0.1.0",
     "loader-utils": "2.0.0",
+    "openapi-typescript-codegen": "^0.22.0",
     "typescript": "4.5.3",
     "webpack": "4.46.0",
     "webpack-cli": "4.9.2",

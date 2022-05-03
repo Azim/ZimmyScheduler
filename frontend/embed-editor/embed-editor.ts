@@ -1,9 +1,9 @@
 import { css, html, LitElement } from 'lit';
 import { customElement, query, state } from 'lit/decorators.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
-import * as ec from './classes';
 import * as fns from 'date-fns';
 import * as validators from './validators';
+import * as eUtils from './embed-util';
 import {readableExpressionLabel} from '../quartz-cron/quartz-cron';
 
 import '../quartz-cron/quartz-cron';
@@ -25,6 +25,8 @@ import '@vaadin/date-time-picker';
 import '@vaadin/date-picker';
 import '@vaadin/select';
 import 'vanilla-colorful';
+import { Notification, NotificationOpenedChangedEvent } from '@vaadin/notification';
+import { TextArea } from '@vaadin/text-area';
 
 import '@skyra/discord-components-core';
 import { defineCustomElements } from "@skyra/discord-components-core/loader";
@@ -35,15 +37,15 @@ import { DatePickerDate } from '@vaadin/date-picker';
 import { TimePickerTime } from '@vaadin/time-picker/src/vaadin-time-picker';
 
 import { EditorEndpoint } from 'Frontend/generated/endpoints';
-import MessageModel from 'Frontend/generated/icu/azim/dashboard/models/editor/MessageModel';
 import { Binder, field } from '@hilla/form';
 import { repeat } from 'lit/directives/repeat.js';
-import Message from 'Frontend/generated/icu/azim/dashboard/models/editor/Message';
 import { BinderNode } from '@hilla/form/BinderNode';
-import Embed from 'Frontend/generated/icu/azim/dashboard/models/editor/Embed';
-import EmbedModel from 'Frontend/generated/icu/azim/dashboard/models/editor/EmbedModel';
-import Field from '../generated/icu/azim/dashboard/models/editor/Field';
-import FieldModel from '../generated/icu/azim/dashboard/models/editor/FieldModel';
+import MessageModel from './models/MessageModel';
+import EmbedModel from './models/EmbedModel';
+import Embed from './models/Embed';
+import Field from './models/Field';
+import FieldModel from './models/FieldModel';
+import { ja } from 'date-fns/locale';
 
 @customElement('embed-editor')
 export class EmbedEditor extends LitElement {
@@ -54,7 +56,7 @@ export class EmbedEditor extends LitElement {
         MessageModel, 
         {
             onChange: ()=>{
-                this.requestUpdate();
+                this.requestUpdate(); //redraw preview and stuff
             },
             onSubmit: EditorEndpoint.submitMessage //TODO try to send from client if applicable
         }
@@ -75,6 +77,12 @@ export class EmbedEditor extends LitElement {
     constructor(){
         super();
         defineCustomElements();
+        setInterval(()=>{
+            this.binder.validate();
+            for(let i = 0; i<this.binder.value.embeds.length; i++){
+                //this.binder.
+            }
+        },500)
     }
 
     private repeatTypes = [
@@ -118,6 +126,10 @@ export class EmbedEditor extends LitElement {
             border-radius: 3px;
         }
 
+        .discord-messages {
+            border-width: 0;
+        }
+
         :host{
             /* general styles thing */
             width:100%;
@@ -139,6 +151,39 @@ export class EmbedEditor extends LitElement {
             padding: 1em;
         }
 
+        ::-webkit-scrollbar {
+            height: 16px;
+            width: 16px;
+        }
+        ::-webkit-scrollbar-corner {
+            background-color: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: rgb(32, 34, 37);
+            border: 4px solid transparent;
+            border-radius: 8px;
+            min-height: 40px;
+            background-clip: padding-box;
+        }
+        ::-webkit-scrollbar-track {
+            background-color: rgb(46, 51, 56);
+            border: 4px solid transparent;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background-clip: padding-box;
+        }
+
+        #json-editor > textarea {
+            font-family: Consolas;
+            font-weight: normal;
+        }
+
+        .hl {
+            width: 100%;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.06);
+            margin-bottom: 1em;
+        }
     `;
 
     render() {
@@ -154,16 +199,16 @@ export class EmbedEditor extends LitElement {
                     <div slot="summary">Profile</div>
                         <vaadin-vertical-layout>
                         <vaadin-text-field
-                            label="Username ${this.binder.for(this.binder.model.author.username).value?.length??0}/80"
+                            label="Username ${this.binder.for(this.binder.model.username).value?.length??0}/80"
                             minlength="0"
                             maxlength="80"
-                            ${field(this.binder.model.author.username)}
+                            ${field(this.binder.model.username)}
                         ></vaadin-text-field>
                         <vaadin-text-field
                             label="Avatar URL"
-                            minlength="0"
+                            pattern = "^(?:https?:\/\/|[%{])"
                             error-message="Invalid url format"
-                            ${field(this.binder.model.author.avatarUrl)}
+                            ${field(this.binder.model.avatar_url)}
                         ></vaadin-text-field>
                     </vaadin-vertical-layout>
                 </vaadin-details>
@@ -171,7 +216,9 @@ export class EmbedEditor extends LitElement {
                 ${repeat(this.binder.model.embeds, b => this.buildEmbed(b))}
 
                 <vaadin-button @click="${(e: any)  => {
+                    console.log('creating embed');
                     this.binder.for(this.binder.model.embeds).appendItem();
+                    console.log('created embed');
                 }}">Add embed</vaadin-button>
                 
                 <vaadin-password-field 
@@ -196,7 +243,7 @@ export class EmbedEditor extends LitElement {
 
                 ${this.buildChoice()}
                 <vaadin-button 
-                    ?disabled="${this.binder.invalid || this.binder.submitting}"
+                    ?disabled="${(this.binder.invalid || this.binder.submitting) &&false}"
                     @click="${(e: any)  => {
                         //EditorEndpoint.test();
                         //this.$server.somethingHappened(this.message.toJson());
@@ -206,14 +253,53 @@ export class EmbedEditor extends LitElement {
                     ${(this.sendNow?'Send':'Save')+'(not really)'}
                 </vaadin-button>
                 <a target="_blank" href="${
-                    //this.message.toDiscohook() //TODO
-                    ''
+                    eUtils.toDiscohook(this.binder.value)
                 }">
                     <vaadin-button>Show in discohook</vaadin-button>
                 </a>
             </vaadin-vertical-layout>
             <vaadin-vertical-layout style= "width:100%;" class="scroller">
-                <!--TODO {this.message.toPreview()} -->
+                ${eUtils.embedPreview(this.binder.value)}
+                <div class="hl"></div>
+                <vaadin-text-area
+                    label="Json editor (readonly for now)"
+                    .value = "${JSON.stringify(this.binder.value, undefined, 2)}"
+                    id="json-editor"
+                    error-message="Invalid JSON"
+                    @value-changed = "${(e:any)=>{
+                        let j:TextArea|null = this.shadowRoot!.querySelector<TextArea>(`#json-editor`);
+                        if(!j) return;
+                        try {
+                            JSON.parse(j.value);
+                            j.invalid = false;
+                        } catch (e:any) {
+                            j.invalid = true;
+                        }
+                    }}"
+                ></vaadin-text-area>
+                <vaadin-horizontal-layout>
+                    <vaadin-button 
+                        ?disabled="${this.shadowRoot!.querySelector<TextArea>(`#json-editor`)?.invalid ?? false}"
+                        style="margin-right:0.5em;"
+                        
+                        @click="${(e: any)  => {
+                            let j:any = this.shadowRoot!.querySelector<TextArea>(`#json-editor`);
+                            this.binder.value = JSON.parse(j.value);
+                        }
+                    }">Apply</vaadin-button>
+                    <vaadin-button 
+                        ?disabled="${false}"
+                        @click="${(e: any)  => {
+                            let j:any = this.shadowRoot!.querySelector<TextArea>(`#json-editor`);
+                            navigator.clipboard.writeText(j.value);
+                            Notification.show('Copied to clipboard', {
+                                position: 'bottom-end',
+                                duration: 2500,
+                                theme: 'primary'
+                            });
+                        }
+                    }">Copy to clipboard</vaadin-button>
+                </vaadin-horizontal-layout>
             </vaadin-vertical-layout>
         `;
     }
@@ -307,8 +393,9 @@ export class EmbedEditor extends LitElement {
         let e = embedBinder.value;
         let i = embeds && e ? embeds.indexOf(e) : -1;
         if(i<0) throw new Error('Embed not found');
-        let name = embedBinder.value?.body?.title??'';
-        let color = embedBinder.value?.body?.color;
+        let name = embedBinder.value?.title??'';
+        let color = eUtils.numberToHexColor(embedBinder.value?.color);
+
         if(!validators.isHexColor(color??'')) color = undefined;
 
         return html`
@@ -323,7 +410,7 @@ export class EmbedEditor extends LitElement {
                     <vaadin-button 
                         theme="icon" 
                         aria-label="Remove embed" 
-                        @click = ${()=> embedBinder.removeSelf()}
+                        @click = "${()=> embedBinder.removeSelf()}"
                         style="background: transparent; margin: 0;"
                     >
                         <vaadin-icon icon="vaadin:close-small" style="color: var(--lumo-secondary-text-color);"></vaadin-icon>
@@ -333,20 +420,33 @@ export class EmbedEditor extends LitElement {
                     <div slot="summary">Author</div>
                     <vaadin-vertical-layout>
                         <vaadin-text-field
-                            label="Author ${embedBinder.for(embedBinder.model.author.author).value?.length??0}/256"
+                            label="Author ${embedBinder.for(embedBinder.model.author.name).value?.length??0}/256"
                             minlength="0"
                             maxlength="256"
-                            ${field(embedBinder.model.author.author)}
+                            @value-changed="${(e: CustomEvent)=>{
+                                let b = embedBinder.for(embedBinder.model.author.name);
+                                b.value = e.detail.value;
+                                b.validate();
+                            }}"
+                            ${field(embedBinder.model.author.name)}
                         ></vaadin-text-field>
                         <vaadin-text-field
                             label="Author URL"
-                            minlength="0"
-                            ${field(embedBinder.model.author.authorUrl)}
+                            @value-changed="${(e: CustomEvent)=>{
+                                let b = embedBinder.for(embedBinder.model.author.url);
+                                b.value = e.detail.value;
+                                b.validate();
+                            }}"
+                            ${field(embedBinder.model.author.url)}
                         ></vaadin-text-field>
                         <vaadin-text-field
                             label="Author Icon URL"
-                            minlength="0"
-                            ${field(embedBinder.model.author.authorIconUrl)}
+                            @value-changed="${(e: CustomEvent)=>{
+                                let b = embedBinder.for(embedBinder.model.author.icon_url);
+                                b.value = e.detail.value;
+                                b.validate();
+                            }}"
+                            ${field(embedBinder.model.author.icon_url)}
                         ></vaadin-text-field>
                     </vaadin-vertical-layout>
                 </vaadin-details>
@@ -357,18 +457,17 @@ export class EmbedEditor extends LitElement {
                             label="Title ${name.length}/256"
                             minlength="0"
                             maxlength="256"
-                            ${field(embedBinder.model.body.title)}
+                            ${field(embedBinder.model.title)}
                         ></vaadin-text-field>
                         <vaadin-text-area
-                            label="Description ${embedBinder.for(embedBinder.model.body.description).value?.length??0}/4096"
+                            label="Description ${embedBinder.for(embedBinder.model.description).value?.length??0}/4096"
                             minlength="0"
                             maxlength="4096"
-                            ${field(embedBinder.model.body.description)}
+                            ${field(embedBinder.model.description)}
                         ></vaadin-text-area>
                         <vaadin-text-field
                             label="URL"
-                            minlength="0"
-                            ${field(embedBinder.model.body.url)}
+                            ${field(embedBinder.model.url)}
                         ></vaadin-text-field>
                         <vaadin-horizontal-layout style="align-items: baseline" >
                             <vaadin-text-field
@@ -376,7 +475,16 @@ export class EmbedEditor extends LitElement {
                                 minlength="0"
                                 maxlength="7"
                                 placeholder="#rrggbb"
-                                ${field(embedBinder.model.body.color)}
+                                value = "${ifDefined(eUtils.numberToHexColor(embedBinder.for(embedBinder.model.color).value))}"
+                                pattern = "^#(?:[0-9a-fA-F]{3}){1,2}$"
+                                @value-changed="${(e: CustomEvent) => {
+                                    if(validators.isHexColor(e.detail.value)){
+                                        embedBinder.for(embedBinder.model.color).value = eUtils.hexToNumberColor(e.detail.value);
+                                    }else{
+                                        embedBinder.for(embedBinder.model.color).value = undefined;
+                                    }
+                                    this.requestUpdate();
+                                }}"
                                 clear-button-visible
                             ></vaadin-text-field>
                             <vaadin-button
@@ -396,7 +504,7 @@ export class EmbedEditor extends LitElement {
                                     style="margin: 0; padding:0"
                                     color="${color??'#rrggbb'}" 
                                     @color-changed="${(e: CustomEvent) => {
-                                        embedBinder.for(embedBinder.model.body.color).value = e.detail.value;
+                                        embedBinder.for(embedBinder.model.color).value = eUtils.hexToNumberColor(e.detail.value);
                                     }}"
                                 ></hex-color-picker>
                             </paper-dialog>
@@ -415,27 +523,44 @@ export class EmbedEditor extends LitElement {
                         }
                     </vaadin-vertical-layout>
                 </vaadin-details>
-                <vaadin-text-field
-                    label="Image URL"
-                    minlength="0"
-                    ${field(embedBinder.model.imageUrl)}
-                ></vaadin-text-field>
-
+                <vaadin-details opened>
+                    <div slot="summary">Images</div>
+                    <vaadin-text-field
+                        label="Image URL"
+                        @value-changed="${(e: CustomEvent)=>{
+                            let b = embedBinder.for(embedBinder.model.image.url);
+                            b.value = e.detail.value;
+                            b.validate();
+                        }}"
+                        ${field(embedBinder.model.image.url)}
+                    ></vaadin-text-field>
+                    <vaadin-text-field
+                        label="Thumbnail URL"
+                        @value-changed="${(e: CustomEvent)=>{
+                            let b = embedBinder.for(embedBinder.model.thumbnail.url);
+                            b.value = e.detail.value;
+                            b.validate();
+                        }}"
+                        ${field(embedBinder.model.thumbnail.url)}
+                    ></vaadin-text-field>
+                </vaadin-details>
                 <vaadin-details opened>
                     <div slot="summary">Footer</div>
                     <vaadin-vertical-layout>
                         <vaadin-text-area
-                            label="Footer ${embedBinder.for(embedBinder.model.footer.footer).value?.length??0}/2048"
+                            label="Footer ${embedBinder.for(embedBinder.model.footer.text).value?.length??0}/2048"
                             minlength="0"
                             maxlength="2048"
-                            ${field(embedBinder.model.footer.footer)}
+                            @change="${()=>{
+                                embedBinder.for(embedBinder.model.footer.text).validate();
+                            }}"
+                            ${field(embedBinder.model.footer.text)}
                         ></vaadin-text-area>
                         <vaadin-date-time-picker
                             label="Timestamp"
                             date-placeholder="DD.MM.YYYY"
                             time-placeholder="hh:mm"
-                            step="${60*5}"
-
+                            step="${60*15}"
                             @value-changed="${(e: CustomEvent) => {
                                 if(!e.detail.value) {
                                     let picker: DateTimePicker = e.currentTarget as DateTimePicker;
@@ -450,17 +575,19 @@ export class EmbedEditor extends LitElement {
                                     };
                                     return;
                                 }
-                                //TODO type?
-                                //let d:Date = new Date(e.detail.value);
-                                //this.message.embeds[i].footer.timestamp = d.toISOString(); 
-                                this.requestUpdate();
+                                let d:Date = new Date(e.detail.value);
+                                embedBinder.for(embedBinder.model.timestamp).value = d.toISOString();
                             }}"
                         ></vaadin-date-time-picker>
                         
                         <vaadin-text-field
                             label="Footer Icon URL"
-                            minlength="0"
-                            ${field(embedBinder.model.footer.footerIconUrl)}
+                            @value-changed="${(e: CustomEvent)=>{
+                                let b = embedBinder.for(embedBinder.model.footer.icon_url);
+                                b.value = e.detail.value;
+                                b.validate();
+                            }}"
+                            ${field(embedBinder.model.footer.icon_url)}
                         ></vaadin-text-field>
                     </vaadin-vertical-layout>
                 </vaadin-details>
@@ -477,6 +604,7 @@ export class EmbedEditor extends LitElement {
 
         let name = fieldBinder.value?.name??'';
         let value = fieldBinder.value?.value??'';
+        //fieldBinder.validate();
 
         return html`
             <vaadin-horizontal-layout style="align-items: flex-start; width:100%;" >

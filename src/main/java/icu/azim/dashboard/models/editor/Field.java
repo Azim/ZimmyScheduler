@@ -17,8 +17,7 @@ public class Field {
 	@NotEmpty(message = "Cannot be empty")
 	@Nonnull
 	private String value;
-	@Nonnull
-	private Boolean inline;
+	private boolean inline;
 	
 	public String getName() {
 		return name;

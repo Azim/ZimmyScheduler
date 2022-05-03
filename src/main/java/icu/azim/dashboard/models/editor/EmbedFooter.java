@@ -1,32 +1,34 @@
 package icu.azim.dashboard.models.editor;
 
+import dev.hilla.Nonnull;
+
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
 public class EmbedFooter {
     @Size(max=2048)
-    private String footer;
-    //TODO date?
-    private String timestamp;
-    @Pattern(regexp = "/^(?:https?:\\/\\/|[%{]).*", message = "Invalid url")
-    private String footerIconUrl;
+    private String text;
+    @Pattern(regexp = Message.urlPattern, message = "Invalid url")
+    private String icon_url;
+    @Pattern(regexp = Message.urlPattern, message = "Invalid url")
+    private String proxy_icon_url; //unused
 
-    public String getFooter() {
-        return footer;
+    public String getText() {
+        return text;
     }
-    public void setFooter(String footer) {
-        this.footer = footer;
+    public void setText(String text) {
+        this.text = text;
     }
-    public String getTimestamp() {
-        return timestamp;
+    public String getIcon_url() {
+        return icon_url;
     }
-    public void setTimestamp(String timestamp) {
-        this.timestamp = timestamp;
+    public void setIcon_url(String icon_url) {
+        this.icon_url = icon_url;
     }
-    public String getFooterIconUrl() {
-        return footerIconUrl;
+    public String getProxy_icon_url() {
+        return proxy_icon_url;
     }
-    public void setFooterIconUrl(String footerIconUrl) {
-        this.footerIconUrl = footerIconUrl;
+    public void setProxy_icon_url(String proxy_icon_url) {
+        this.proxy_icon_url = proxy_icon_url;
     }
 }

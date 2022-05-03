@@ -2,54 +2,88 @@ package icu.azim.dashboard.models.editor;
 
 import dev.hilla.Nonnull;
 
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
 
 public class Embed {
+    @Size(max=256)
+    private String title;
+    @Size(max=4096)
+    private String description;
+    @Pattern(regexp = Message.urlPattern, message = "Invalid url")
+    private String url;
+    private String timestamp;
+    private Integer color;
+    /*
+    @Pattern(regexp = "/^#(?:[0-9a-fA-F]{3}){1,2}$/")
+    @Size(max=7)
+    private String color;
+    */
+    private EmbedFooter footer;
+    private EmbedImage image;
+    private EmbedImage thumbnail;
     private EmbedAuthor author;
-    private EmbedBody body;
     @Nonnull
     private Field[] fields;
-    @Pattern(regexp = "/^(?:https?:\\/\\/|[%{]).*", message = "Invalid url")
-    private String imageUrl;
-    @Pattern(regexp = "/^(?:https?:\\/\\/|[%{]).*", message = "Invalid url")
-    private String thumbnailUrl;
-    private EmbedFooter footer;
 
-    public EmbedAuthor getAuthor() {
-        return author;
+    public String getTitle() {
+        return title;
     }
-    public void setAuthor(EmbedAuthor author) {
-        this.author = author;
+    public void setTitle(String title) {
+        this.title = title;
     }
-    public EmbedBody getBody() {
-        return body;
+    public String getDescription() {
+        return description;
     }
-    public void setBody(EmbedBody body) {
-        this.body = body;
+    public void setDescription(String description) {
+        this.description = description;
     }
-    public Field[] getFields() {
-        return fields;
+    public String getUrl() {
+        return url;
     }
-    public void setFields(Field[] fields) {
-        this.fields = fields;
+    public void setUrl(String url) {
+        this.url = url;
     }
-    public String getImageUrl() {
-        return imageUrl;
+    public String getTimestamp() {
+        return timestamp;
     }
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
+    public void setTimestamp(String timestamp) {
+        this.timestamp = timestamp;
     }
-    public String getThumbnailUrl() {
-        return thumbnailUrl;
+    public Integer getColor() {
+        return color;
     }
-    public void setThumbnailUrl(String thumbnailUrl) {
-        this.thumbnailUrl = thumbnailUrl;
+    public void setColor(Integer color) {
+        this.color = color;
     }
     public EmbedFooter getFooter() {
         return footer;
     }
     public void setFooter(EmbedFooter footer) {
         this.footer = footer;
+    }
+    public EmbedImage getImage() {
+        return image;
+    }
+    public void setImage(EmbedImage image) {
+        this.image = image;
+    }
+    public EmbedImage getThumbnail() {
+        return thumbnail;
+    }
+    public void setThumbnail(EmbedImage thumbnail) {
+        this.thumbnail = thumbnail;
+    }
+    public EmbedAuthor getAuthor() {
+        return author;
+    }
+    public void setAuthor(EmbedAuthor author) {
+        this.author = author;
+    }
+    public Field[] getFields() {
+        return fields;
+    }
+    public void setFields(Field[] fields) {
+        this.fields = fields;
     }
 }

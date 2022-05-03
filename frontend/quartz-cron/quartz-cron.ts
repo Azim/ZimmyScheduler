@@ -343,6 +343,7 @@ export class QuartzCron extends LitElement {
         }
         .choice-text{
             padding: var(--lumo-space-xs) var(--lumo-space-s) var(--lumo-space-xs) var(--lumo-space-xs);
+            color: rgb(163, 163, 163);
         }
         .hour-select{
             width: 4.45em;

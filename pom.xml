@@ -205,6 +205,11 @@
 						</goals>
 					</execution>
 				</executions>
+				<configuration>
+					<!--
+					<openApiJsonFile>openapi.json</openApiJsonFile>
+					-->
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>
@@ -230,11 +235,13 @@
 						<configuration>
 							<productionMode>true</productionMode>
 							<pnpmEnable>false</pnpmEnable>
+							<!--
+                            <openApiJsonFile>openapi.json</openApiJsonFile>
+                            -->
 						</configuration>
 					</plugin>
 				</plugins>
 			</build>
 		</profile>
-
 	</profiles>
 </project>
